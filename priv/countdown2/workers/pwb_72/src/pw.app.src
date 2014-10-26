@@ -1,0 +1,14 @@
+%%-*- mode: erlang -*-
+{application, pw,
+ [
+  {description,  "solver for fh wedel programming contest 2013/14"},
+  {vsn,          "0.1"},
+  {registered,   []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod,          {pw_app, []}},
+  {env,          []}
+ ]
+}.

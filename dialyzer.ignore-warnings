@@ -1,0 +1,4 @@
+### This is not a comment, just a pattern that is
+### very unlikely to match anything that we care about.
+### Don't put blank lines in this file.
+src/slave.erl:68: The call erlang:register(Name::atom(),pid()) might fail due to a possible race condition caused by its combination with the erlang:whereis(S::any()) call in slave.erl on line 63

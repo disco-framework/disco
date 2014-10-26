@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>802</width>
+    <height>618</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>DISCO GUI</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="3" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabWorker">
+       <attribute name="title">
+        <string>Worker</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="QTableWidget" name="tableWorker">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::NoSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <property name="verticalScrollMode">
+           <enum>QAbstractItemView::ScrollPerPixel</enum>
+          </property>
+          <property name="horizontalScrollMode">
+           <enum>QAbstractItemView::ScrollPerPixel</enum>
+          </property>
+          <property name="showGrid">
+           <bool>true</bool>
+          </property>
+          <property name="sortingEnabled">
+           <bool>true</bool>
+          </property>
+          <property name="rowCount">
+           <number>0</number>
+          </property>
+          <property name="columnCount">
+           <number>7</number>
+          </property>
+          <attribute name="verticalHeaderDefaultSectionSize">
+           <number>24</number>
+          </attribute>
+          <column>
+           <property name="text">
+            <string>Group</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>ID</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Name</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Proposition</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Complexity</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Points</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Overall Points</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabIO">
+       <attribute name="title">
+        <string>IO</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QPlainTextEdit" name="txtRecv">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="undoRedoEnabled">
+           <bool>false</bool>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="plainText">
+           <string notr="true"/>
+          </property>
+          <property name="textInteractionFlags">
+           <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="hLayoutIO">
+          <item>
+           <widget class="QLineEdit" name="edtSend">
+            <property name="text">
+             <string notr="true"/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnSend">
+            <property name="text">
+             <string>send</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>802</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionLoadGameState"/>
+    <addaction name="actionSaveGameState"/>
+    <addaction name="separator"/>
+    <addaction name="actionReloadAllData"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuProblems">
+    <property name="title">
+     <string>Problems</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuRound">
+    <property name="title">
+     <string>Round</string>
+    </property>
+    <addaction name="actionStartRound"/>
+    <addaction name="separator"/>
+    <addaction name="actionAddScores"/>
+    <addaction name="separator"/>
+    <addaction name="actionKillAllWorkers"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuProblems"/>
+   <addaction name="menuRound"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionLoadGameState">
+   <property name="text">
+    <string>Load game state ...</string>
+   </property>
+  </action>
+  <action name="actionSaveGameState">
+   <property name="text">
+    <string>Save game state ...</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionNoProblem">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>--- no problems ---</string>
+   </property>
+  </action>
+  <action name="actionStartRound">
+   <property name="text">
+    <string>Start round</string>
+   </property>
+  </action>
+  <action name="actionKillAllWorkers">
+   <property name="text">
+    <string>Kill all workers</string>
+   </property>
+  </action>
+  <action name="actionReloadAllData">
+   <property name="text">
+    <string>reload all data</string>
+   </property>
+  </action>
+  <action name="actionAddScores">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Add scores</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

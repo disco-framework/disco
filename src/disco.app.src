@@ -1,0 +1,43 @@
+%%-*- mode: erlang -*-
+{application, disco,
+ [
+  {description,  "distributed contest framework"},
+  {vsn,          "1.0"},
+  {registered,   []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  lager
+                 ]},
+  {mod,          {disco_app, []}},   %% application start point
+  {env,          [
+                  {worker_run_cmd,  "false"},        %% :: string()
+                  {worker_name_cmd, "echo unknown"}, %% :: string()
+                  {workers, []},                     %% :: [ {WorkerID::atom(), IP::atom(), RankingGroup::string()} ]
+                  {problems, []},                    %% :: [ {Description::string(), Specification::string(),
+                                                     %%       AnswerTime::integer(), InitialState::string} ]
+                  {node_start_timeout, 5000},        %% :: timeout() [ms]
+                  {worker_call_timeout, 2000},       %% :: timeout() [ms]
+                  {port_call_timeout, 2000},         %% :: timeout() [ms]
+                  {port_buffer_size, 300},           %% :: timeout() [ms]
+                  {autosave_dir, "autosaves"},       %% :: string() | disabled
+                  {remote_node_path_prefix, ""},     %% :: string() (may be empty)
+
+                  %% When the cluster is started in parallel, multiple nodes are booted
+                  %% at the same time. The degree of parallelism can be adjusted through
+                  %% the slice size which determines the number of concurrent threads to use.
+                  %% Make sure `MaxStartups' in the config of your ssh daemon is large enough.
+                  {cluster_start_mode, sequential},  %% :: sequential | parallel
+                  {startup_slice_size, 10},          %% :: pos_integer()
+
+                  {score_mode, ranked},
+
+                  %% timeouts for startup tests. The startup tests determines whether
+                  %% the executables throw an error during this time after they're
+                  %% started.
+                  {component_test_timeout, 500},     %% :: timeout() [ms]
+                  {do_component_test, true},         %% :: boolean()
+                  {worker_test_timeout, 500}         %% :: timeout() [ms]
+                 ]}
+ ]
+}.

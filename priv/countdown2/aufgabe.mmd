@@ -1,0 +1,177 @@
+
+Programmierwettbewerb im Wintersemester 2013/2014: Die Aufgabe
+==============================================================
+
+Die Aufgabe
+-----------
+
+[wiki-42]: http://de.wikipedia.org/wiki/42_(Antwort)
+
+Alle Informatiker kennen die [Antwort][wiki-42], aber wie heißt die Frage?
+Diese Frage möchten wir in einem kleinen Knobelspiel beantworten.
+Aber nicht nur diese, sondern noch einige mehr.
+
+Das kleine zu lösende Rätsel besteht aus folgender Aufgabe:  
+Gegeben sei eine natürliche Zahl, z.B. 42, und eine Liste von weiteren natürlichen Zahlen.
+Gesucht ist der komplizierteste Ausdruck, der mit den gegebenen Zahlen und Operationen, etwa den 4 Grundrechenarten, gebildet werden kann und das gegebene Resultat ergibt.
+
+### Ein kleines Beispiel:
+
+Gegeben sei die Liste von Zahlen `[1,1,2,3,5,8]`, das Resultat `42` und als erlaubte Operationen in diesem Beispiel die vier Grundrechenarten.  
+Eine Lösung ist dann `2 + (5 * 8)`, eine weitere `3 + ((8 * 5) - 1)`,  
+eine dritte `(3 + ((5 * 8) - 1)) * 1`.  
+Man erkennt an den Beispielen, dass die Reihenfolge der gegebenen Zahlen nicht die Lösungsmenge beeinflusst.
+
+Zur Präzisierung der Aufgabe müssen wir nun wissen, welche arithmetischen Operationen im Wettbewerb zugelassen sind und wie die Komplexität eines Ausdrucks gemessen wird.
+
+
+Die Spielregeln
+---------------
+
+  * Es wird ausschließlich mit natürlichen Zahlen ab 1 gerechnet.
+    Auch alle Zwischenergebnisse müssen immer natürliche Zahlen größer Null sein.  
+    __Beispiele:__  
+    `(1 + 1) - 1` ist gültig,  
+    `(1 - 1) + 1` ist nicht erlaubt.
+  * Als arithmetische Operatoren sind die Addition (`+`), die Subtraktion (`-`),
+    die Multiplikation (`*`) und die Division (`/`) erlaubt.
+  * Die Division muss aufgehen, es darf kein Rest entstehen.  
+    __Beispiel:__  
+    `3 / 2` ist nicht gültig.
+  * Nur mit den vier Grundrechenarten zu rechnen kann auf die Dauer etwas langweilig werden, außerdem findet man für viele Zahlen dann gar keinen Ausdruck.
+    Daher werden drei weitere Operatoren erlaubt: Die drei Binomischen Formeln (`<+>`, `<->`, `<*>`).  
+    __Zur Erklärung:__  
+    `x <+> y` entspricht `(x + y)^2`.  
+    `x <-> y` entspricht `(x - y)^2`.  
+    `x <*> y` entspricht `(x + y) * (x - y)`.  
+    Eine Lösung für das obere Beispiel mit 42 ist dann auch:  
+    `3 * (((1 * 2) <+> 1) + 5)`
+  * Auch bei der Berechnung der Binomischen Formeln dürfen nur natürliche Zahlen größer Null vorkommen.
+    D.h. insbesondere bei `<->` und `<*>` muss `x` stets größer als `y` sein.  
+    __Beispiele:__  
+    `5 <*> 2` ist gültig.  
+    `2 <*> 5` ist nicht gültig.
+  * Die Komplexität eines Ausdrucks wird folgendermaßen festgelegt:  
+    Alle Zahlen die in dem Ausdruck vorkommen und alle Zwischenergebnisse werden aufsummiert, das Resultat ist die Komplexität.  
+    Dabei ist ein Zwischenergebnis das Ergebnis der Anwendung eines Operators, der Ausdruck `2 <+> 3` hat also die Komplexität `2 + 3 + 25 = 30`.  
+    __weitere Beispiele:__  
+    Die Komplexität von `2 + (5 * 8)` ist `97`,  
+    die von `3 * (((1 * 2) <+> 1) + 5)` ist `79`  
+    und die von `(3 + ((1 <+> 1) <+> 5)) / 2`, auch eine Lösung für `42`, ist `223`.  
+    Diese letzte Lösung ist also schon ziemlich kompliziert, was unter anderem darin begründet ist, dass die äußerste Operation eine Division ist.
+
+Hinweis: Achten Sie darauf, dass Zwischenergebnisse nicht zu klein (kleiner gleich Null), aber auch nicht zu groß sind, um die Grenzen ihres Zahlentyps nicht zu sprengen.
+
+
+Die Aufrufkonventionen
+----------------------
+
+Die Teilnehmerprogramme werden für jede Aufgabe neu gestartet und nach abgelaufener Zeit falls nötig gewaltsam beendet.
+Nach Programmstart werden die benötigten Daten über die Standardeingabe übergeben.
+Mit dieser Übertragung beginnt die Zugzeit und es können Vorschläge eingereicht werden.  
+Zwischen dem Start der Programme und der Übergabe der Nachrichten lassen wir aus Gründen der Chancengleichheit genug Zeit, um z.B. eine VM oder einen Interpreter vollständig zu starten.
+
+Die Daten werden jeweils in einer Zeile und immer in der folgenden Reihenfolge und Syntax übergeben:
+
+  * Die zur Verfügung stehenden Zahlen als eine kommagetrennte Liste.
+    Die Liste steht in eckigen Klammern und enthält immer mindestens eine Zahl.
+    Es stehen keine Leerzeichen in der Liste.
+  * Die gesuchte Zahl.
+
+
+### Beispiel für einen Aufruf:
+
+Das oben gewählte Beispiel könnte folgendermaßen ausgeführt werden:
+
+    (echo "[1,1,2,3,5,8]"; echo 42) | make run
+
+Dabei ist zu beachten, dass während der Durchführung des Wettbewerbs die Standardeingabe von uns *nicht* geschlossen wird.
+Es sollte beim Einlesen der Daten also nicht auf ein `EOF` gewartet werden.  
+Ein besserer Beispielaufruf ist daher:
+
+    (echo "[1,1,2,3,5,8]"; echo 42; cat) | make run
+
+
+Die Ausgabe
+-----------
+
+Die gefundenen Ausdrücke werden auf der Standardausgabe ausgegeben.
+Es ist möglich mehrere Lösungen auszugeben, jede Lösung wird dabei auf eine Zeile geschrieben.
+Leerraum innerhalb der Lösungsausdrücke ist erlaubt, aber nicht notwendig.
+Die letzte ausgegebene Lösung zählt.
+
+Wichtig: Wenn mit gepufferter Ausgabe gearbeitet wird, sollte immer der Ausgabepuffer explizit nach der Ausgabe einer Lösung geleert werden, damit die Lösung nicht versehentlich im Ausgabepuffer stehen bleibt.
+
+Die Ausdrücke müssen nach folgender kontextfreier Grammatik aufgebaut
+sein:
+
+    Ausdruck        ::=  Zahl |  BinärerAusdruck
+    Zahl            ::=  Ziffer Ziffern
+    Ziffer          ::=  '0' | '1' | ... | '9'
+    Ziffern         ::=  | Ziffer Ziffern
+    BinärerAusdruck ::=  Faktor Operator Faktor
+    Faktor          ::=  '(' Ausdruck ')' |  Zahl
+    Operator        ::= '+' | '-' | '*' | '/' | '<+>' | '<->' | '<*>'
+
+Man erkennt an der Grammatik und an den Beispielen, dass ausschließlich mit vollständig geklammerten Ausdrücken gearbeitet wird.
+Assoziativitäten sind also nicht erlaubt.
+
+
+Die Projektorganisation
+-----------------------
+
+  * Als Programmiersprachen sind alle Sprachen erlaubt, die auf einem Standard Linux Rechner in den Rechenzentren der FH&nbsp;Wedel zur Verfügung stehen.
+  * Die Programme bekommen sämtliche Eingaben über die Standardeingabe.
+    Andere Eingabekanäle, z.B. Netzverbindungen oder File-IO, dürfen nicht verwendet werden.
+    Die Ausgabe erfolgt ausschließlich über die Standard-Ausgabe.
+  * Die Entwicklung der Programme erfolgt wie bei den Übungen über das Versionsverwaltungssystem der FH&nbsp;Wedel.
+    Hierbei muss die Entstehung der Software nachvollziehbar sein,
+    das heißt, nach jedem größeren Entwicklungsschritt sind die neuen Quellen in das Repository einzuchecken.
+    Dieses vielleicht restriktiv klingende Vorgehen hat mehrere Vorteile:
+    Zum einem wird die Arbeit im Team dadurch erleichtert, gerade dann, wenn die Mitglieder räumlich entfernt arbeiten.
+    Weiter hat man immer eine Datensicherung und kann bei neuen Fehlern auf eine alte Version zurückgreifen.
+    Wir möchten damit aber auch die Versuchung reduzieren, ein fertiges Programm zu nehmen und es unter eigenem Namen laufen zu lassen.
+  * Das Projekt sollte auf folgende Art organisiert werden:
+      * Im Wurzelverzeichnis muss ein `Makefile` liegen.
+      * Im Makefile muss immer das default-Ziel "`all`" enthalten sein, das zur Erzeugung des Programms verwendet wird.
+        Sollte das Programm in einer interpretierten Sprache geschrieben werden, so ist hier eine leere Aktion einzutragen.
+      * Zusätzlich ist ein Ziel "`run`" im Makefile zu definieren, um das Programm korrekt auszuführen.
+        Sollten noch weitere Dateien für den Aufruf des Programms benötigt werden, so sind alle diese Daten in ein direktes Unterverzeichnis zu speichern.
+        Zugriffe auf diese Dateien müssen über relative Pfadnamen realisiert werden, damit ein Verschieben in ein Installationsverzeichnis möglich wird.
+        Je nach Aufruf im Makefile ist darauf zu achten, dass das Programm auch als "ausführbar" eingecheckt ist.
+      * Zu jeder Lösung gehört auch ein Projektname.
+        Um den Namen des Projekts festzulegen, soll im Makefile auch noch ein Ziel "`name`" definiert werden.
+        Mit `make name` wird dann der Projektname auf die Standardausgabe geschrieben.
+        Der Projektname darf aus genau einer Zeile mit maximal 30 Zeichen bestehen.
+  * Ein Minibeispiel für ein Projekt ist in dem Archiv [example.tar.gz] zu finden.
+  * Zu dem Wettbewerb gibt es eine Newsgroup: [fhw.programmierwettbewerb][newsgroup]
+
+
+Der Wettbewerb
+--------------
+
+In jeder Runde wird eine Aufgabe, eine Liste von Zahlen und eine gesuchte Zahl vorgegeben.
+Dann werden die Lösungsprogramme mit den gleichen Vorgaben aufgerufen, um ihre beste Lösung zu ermitteln.
+Dabei wird die Rechenzeit beschränkt, es wird also darauf ankommen, möglichst zielgerichtet eine lukrative Lösung zu finden.
+Bei den einfachen Runden (`[6,7]  42`) wird weniger Zeit zur Verfügung stehen, als bei späteren Runden.
+Die erreichten Punkte der besten Lösung jedes Programms werden normalisiert und über alle Runden summiert.
+Werden invalide Lösungen eingereicht, z.B. Zwischenergebnisse `<= 0` oder syntaktische Fehler wie fehlende Klammern, wird das entsprechende Programm von der Wertnug ausgeschlossen.
+
+
+Preise
+------
+
+Wie bei den letzten Wettbewerben wird es natürlich wieder attraktive Preise geben.  
+Genaueres zu den Preisen werden wir beim Shootout bekannt geben.
+
+
+Das Wichtigste
+--------------
+
+Viel Spaß beim Knobeln und Bearbeiten und viel Erfolg!
+
+
+
+[example.tar.gz]: ./example.tar.gz
+[newsgroup]:      news://news.fh-wedel.de/fhw.programmierwettbewerb
+[whb]:            http://www.wedeler-hochschulbund.de/

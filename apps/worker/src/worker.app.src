@@ -1,0 +1,15 @@
+{application, worker,
+ [
+  {description,  "disco worker wrapper"},
+  {vsn,          "1.0"},
+  {registered,   []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod,          {worker_app, []}},   %% application start point
+  {env,          [
+                  {port_buffer_size, 300}         %% :: int
+                 ]}
+ ]
+}.

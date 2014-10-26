@@ -26,16 +26,22 @@ To use the DisCo framework for your own contest, you should provide at least you
  - Erlang R16B or 17
  - `make`
  - `git` (to automatically download erlang dependencies)
- - ssh client (e.g. openssh)
+ - ssh client (e.g. `openssh`)
  - `ip` (to find out local ip address on the server)
  - `rsync`
- - `python3`, `pyqt4-dev-tools` (for general gui component and integration tests)
+ - `python`, `pyqt4-dev-tools` (for general gui component)
+ - `python3` (only for the integration tests)
 
 ### Configuration
 
-Look at the documented sample config files for the contests squares, countdown and countdown2.
+Look at the documented sample config files for the contests 'squares' and 'countdown2'.
 
 ### Execution
+
+Make sure that the required components and workers for the desired contest are available and executable.
+In case of a sample contest, they can be build with `make all` in the corresponding directory (e.g. `make all -C priv/countdown2`).
+
+Then simply run:
 
     make run
 

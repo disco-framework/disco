@@ -1,0 +1,159 @@
+Date: 11.06.2012 12:25
+
+Programmierwettbewerb im Sommersemester 2012: Squares
+=====================================================
+
+Die Aufgabe: Puzzeln mit Quadraten
+----------------------------------
+
+Gegeben sei ein Quadrat bestimmer Größe sowie eine Menge von Quadraten, die kleiner sind als dieses.
+Die Aufgabe besteht darin, die kleineren Quadrate so in das Große hinein zu puzzeln, dass möglichst wenig freie Fläche übrig bleibt.
+Je größer die bedeckte Fläche, desto höher die Punktzahl für diese Lösung.
+
+Die eigentliche Aufgabe für das Programm ist es dann, einen (gemessen an der erzielten Punktzahl) möglichst guten Lösungsvorschlag einzureichen.
+Dabei dürfen innerhalb einer bestimmten Zeit beliebig viele Vorschläge abgegeben werden.
+Gewertet wird am Ende der letzte Vorschlag, der noch innerhalb der gegebenen Zeit eingereicht wurde.
+
+
+### Ein kleines Beispiel
+
+Größe des zu füllenden Quadrates: `42`  
+Verfügbare Quadrate: `2, 4, 40`
+
+Hier wäre eine Lösung, das 2er- und das 4er-Quadrat zu legen  
+*(belegte Fläche: (2^2 + 4^2) / 42^2 = 20 / 1764)*  
+Eine weitere Lösung wäre, das 40er-Quadrat zu legen und das 2er in die verbleibende Lücke  
+*(belegte Fläche: (40^2 + 2^2) / 42^2 =  1604 / 1764)*  
+Die zweite Lösung ist natürlich deutlich besser.
+
+
+Die Spielregeln
+---------------
+
+  * Die Kantenlängen aller Quadrate sind immer natürliche Zahlen ab 1.
+    Die Kantenlängen und die Anzahl der verfügbaren Quadrate werden den Bereich der 16-Bit-Integer-Zahlen nicht überschreiten.
+  * Für eine gültige Lösung müssen die gelegten Quadrate vollständig in dem großen Quadrat liegen
+    und dürfen sich nicht überlappen.
+  * Es können mehrere Quadrate der selben Größe gegeben sein.
+    Sie dürfen jedoch immer nur in der gegebenen Häufigkeit verwendet werden.
+  * Ist einer der Lösungsvorschläge ungültig oder entspricht die Ausgabe nicht der erwarteten Syntax,
+    scheidet das Teilnehmerprogramm aus.
+  * Es können durchaus deutlich mehr Quadrate gegeben sein, als in die zu füllende Fläche passen.
+
+
+Die Aufrufkonventionen
+----------------------
+
+Die Teilnehmerprogramme werden für jede Aufgabe neu gestartet und nach abgelaufener Zeit falls nötig gewaltsam beendet.
+Nach Programmstart werden die benötigten Daten über die Standardeingabe übergeben.
+Mit dieser Übertragung beginnt die Zugzeit und es können Vorschläge eingereicht werden.  
+Zwischen dem Start der Programme und der Übergabe der Nachrichten lassen wir aus Gründen der Chancengleichheit genug Zeit, um z.B. eine VM oder einen Interpreter vollständig zu starten.
+
+Die Daten werden jeweils in einer Zeile und immer in der folgenden Reihenfolge und Syntax übergeben:
+
+  * Die zur Verfügung stehenden Quadrate als eine kommagetrennte Liste ihrer Kantenlängen.
+    Die Liste steht in eckigen Klammern.
+  * Die Kantenlänge des zu füllenden Quadrates
+
+
+### Beispiel für einen Aufruf
+
+Das oben gewählte Beispiel könnte folgendermaßen ausgeführt werden:
+
+    (echo "[2,4,40]"; echo "42") | teilnehmerprogramm
+
+Dabei ist zu beachten, dass während der Durchführung des Wettbewerbs die Standardeingabe von uns *nicht* geschlossen wird.
+Es sollte beim Einlesen der Daten also nicht auf ein `EOF` gewartet werden.  
+Ein besserer Beispielaufruf ist daher:
+
+    (echo "[2,4,40]"; echo "42"; cat) | teilnehmerprogramm
+
+
+Die Ausgabe
+-----------
+
+Die gefundenen Belegungen werden auf der Standardausgabe ausgegeben.
+Es ist möglich mehrere Lösungen auszugeben, jede Lösung wird dabei auf eine Zeile geschrieben.
+Die letzte ausgegebene Lösung zählt.
+
+Wichtig: Wenn mit gepufferter Ausgabe gearbeitet wird, sollte immer der Ausgabepuffer explizit nach der Ausgabe einer Lösung geleert werden, damit die Lösung nicht versehentlich im Ausgabepuffer stehen bleibt.
+
+
+### Format der Lösung
+
+Eine Platzierung für ein Quadrat besteht aus drei natürlichen Zahlen, der x-Position, der y-Position und der Größe des Quadrates.
+Die Koordinaten beginnen bei 0.
+Die drei Werte sind durch Kommas getrennt und von runden Klammern eingefasst.
+Diese Tripel befinden sich in einer Komma-getrennten Liste, die von eckigen Klammern eingefasst ist.
+Leerzeichen innerhalb der Lösungen sind erlaubt aber nicht notwendig.
+
+Beispiel:
+
+    [(0,0,2),(2,0,42)]
+
+
+Die Projektorganisation
+-----------------------
+
+  * Als Programmiersprachen sind alle Sprachen erlaubt, die auf einem Standard Linux Rechner in den Rechenzentren der FH Wedel zur Verfügung stehen.
+  * Die Programme bekommen sämtliche Eingaben über die Standardeingabe.
+    Andere Eingabekanäle, z.B. Netzverbindungen oder File-IO, dürfen nicht verwendet werden.
+    Die Ausgabe erfolgt ausschließlich über die Standard-Ausgabe.
+  * Die Entwicklung der Programme erfolgt wie bei den Übungen über das Versionsverwaltungssystem der FH Wedel.
+    Hierbei muss die Entstehung der Software nachvollziehbar sein,
+    das heißt, nach jedem größeren Entwicklungsschritt sind die neuen Quellen in das Repository einzuchecken.
+    Dieses vielleicht restriktiv klingende Vorgehen hat mehrere Vorteile:
+    Zum einem wird die Arbeit im Team dadurch erleichtert, gerade dann, wenn die Mitglieder räumlich entfernt arbeiten.
+    Weiter hat man immer eine Datensicherung und kann bei neuen Fehlern auf eine alte Version zurückgreifen.
+    Wir möchten damit aber auch die Versuchung reduzieren, ein fertiges Programm zu nehmen und es unter eigenem Namen laufen zu lassen.
+  * Das Projekt sollte auf folgende Art organisiert werden:
+      * Im Wurzelverzeichnis muss ein `Makefile` liegen.
+      * Im Makefile muss immer das default-Ziel "`all`" enthalten sein, das zur Erzeugung des Programms verwendet wird.
+        Sollte das Programm in einer interpretierten Sprache geschrieben werden, so ist hier eine leere Aktion einzutragen.
+      * Zusätzlich ist ein Ziel "`run`" im Makefile zu definieren, um das Programm korrekt auszuführen.
+        Sollten noch weitere Dateien für den Aufruf des Programms benötigt werden, so sind alle diese Daten in ein direktes Unterverzeichnis zu speichern.
+        Zugriffe auf diese Dateien müssen über relative Pfadnamen realisiert werden, damit ein Verschieben in ein Installationsverzeichnis möglich wird.
+        Je nach Aufruf im Makefile ist darauf zu achten, dass das Programm auch als "ausführbar" eingecheckt ist.
+      * Zu jeder Lösung gehört ein Projektname.
+        Um den Namen des Projekts festzulegen, soll im Makefile auch noch ein Ziel "`name`" definiert werden.
+        Mit `make name` wird dann der Projektname auf die Standardausgabe geschrieben.
+        Der Projektname darf aus genau einer Zeile mit maximal 30 Zeichen bestehen.
+  * Ein Minibeispiel für ein Projekt ist in dem Archiv [example.tar.gz] zu finden.
+  * Zu dem Wettbewerb gibt es eine Newsgroup: [fhw.programmierwettbewerb][newsgroup]
+
+
+Der Wettbewerb
+--------------
+
+In jeder Runde wird ein zu füllendes Quadrat und eine Liste mit verfügbaren kleineren Quadraten vorgegeben.
+Dann werden die Lösungsprogramme mit den gleichen Vorgaben aufgerufen, um ihre beste Lösung zu ermitteln.
+Dabei wird die Rechenzeit beschränkt, es wird also darauf ankommen, möglichst zielgerichtet eine lukrative Lösung zu finden.
+Bei den einfachen Runden (geringe Anzahl an Quadraten) wird weniger Zeit zur Verfügung stehen als bei späteren Runden.
+
+Die Programme scheiden nacheinander aus, bis die Sieger feststehen.
+Es scheidet jeweils das Programm mit den wenigsten Punkten innerhalb einer gewissen Rundenzahl aus.
+Bei einem Gleichstand dürfen die betroffenen Teilnehmer im Wettbewerb bleiben, aber beim nächstes Mal scheiden dann zwei Programme aus.
+
+
+Preise
+------
+
+Was wäre ein Wettbewerb ohne Preise?
+Wir konnten den [Wedeler Hochschulbund][whb] als Sponsor gewinnen.
+Die Preise werden wie beim letzten Mal aus Buchgutscheinen bestehen.
+Genaueres zu den Preisen werden wir beim Shootout am 4.7. bekannt geben.
+
+Anschließend findet das vom [Asta] organisierte Grillfest im Innenhof statt.
+
+
+Zum Schluss
+-----------
+
+Viel Spaß beim Knobeln und Bearbeiten und viel Erfolg!
+
+
+
+[example.tar.gz]: ./example.tar.gz
+[newsgroup]:      news://news.fh-wedel.de/fhw.programmierwettbewerb
+[whb]:            http://www.wedeler-hochschulbund.de/
+[Asta]:           http://asta.fh-wedel.de/

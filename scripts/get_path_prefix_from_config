@@ -1,0 +1,14 @@
+#!/usr/bin/env escript
+
+main([FileName]) ->
+    case file:consult(FileName) of
+        {ok, [Config]}  -> DiscoVal   = proplists:get_value(disco, Config),
+                           PathPrefix = proplists:get_value(remote_node_path_prefix, DiscoVal),
+                           io:format("~s~n", [PathPrefix]);
+        {error, Reason} -> io:format("Error reading ~s: ~p~n", [FileName, Reason]);
+        _               -> io:format("Unknown error~n")
+    end;
+main(_) ->
+    io:format("Read remote node path prefix from given config file.~n"),
+    io:format("  Format:~n"),
+    io:format("  get_path_prefix_config CONFIG_FILE~n").
