@@ -7,6 +7,8 @@
   - e.g. missing .beam files on client (code distribution errors)
   - consider all possible errors on framework startup
   - ssh errors
+- add integration tests for all major GUI actions
+- clean up unit tests
 
 
 ## should be done at some point
