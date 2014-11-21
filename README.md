@@ -36,7 +36,8 @@ To use the DisCo framework for your own contest, you should provide at least you
 - Install `haskell-platform`
 - For the validator component
   - Json package: `cabal update && cabal install json`
-  - build: `make -sC priv/countdown2/components/validator`
+- build components and workers: `make -sC priv/countdown2`
+- `make run`
 
 ### Configuration
 
