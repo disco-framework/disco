@@ -21,7 +21,6 @@
 -behavior(gen_fsm).
 
 -include("validator_data.hrl").
--include("../global_types.hrl").
 
 %% application programming interface
 -export([
@@ -56,7 +55,7 @@
 %% name under which to register the process
 -define(REG_NAME, validator_queue).
 
--record(state, {queue             = queue:new() :: queue(),
+-record(state, {queue             = queue:new() :: queue:queue(proposition()),
                 workers_working   = false       :: boolean(),
                 waiting_validator = none        :: {pid(), term()} | none}).
 
