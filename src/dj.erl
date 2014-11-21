@@ -631,7 +631,7 @@ terminate(_Msg, _StateName, _Data) ->
 
 %% @doc calculate normalized scores for the ending round and send
 %% corresponding updates to gui
--spec calc_and_send_normalized_scores(score_mode(), dict()) -> dict().
+-spec calc_and_send_normalized_scores(score_mode(), worker_dict()) -> worker_dict().
 calc_and_send_normalized_scores(ScoreMode, WorkerDict) ->
     ProcScoreFun =
         case ScoreMode of
@@ -698,7 +698,7 @@ unexpected(Msg, State) ->
 
 
 %% @doc Update a single worker in the worker dict.
--spec update_worker(worker_id(), fun((#worker{}) -> #worker{}), dict()) -> dict().
+-spec update_worker(worker_id(), fun((#worker{}) -> #worker{}), worker_dict()) -> worker_dict().
 update_worker(WorkerID, Fun, WorkerDict) ->
 
     dict:update(WorkerID,
@@ -735,8 +735,8 @@ send_worker_to_gui(WorkerID, #worker{
 %% @doc Give all workers the next challenge. Thereby starting the round
 %% timer in the worker_app.
 %% @throws {port_unreachable, WorkerID} | {timeout, WorkerID}
--spec give_challenges(dict(), [string()], pos_integer(), non_neg_integer())
-                     -> dict().
+-spec give_challenges(worker_dict(), [string()], pos_integer(), non_neg_integer())
+                     -> worker_dict().
 give_challenges(WorkerDict, WorkerInput, AnswerTime, Timeout) ->
     dict:map(
       fun(WorkerID, Worker=#worker{blocked=Blocked}) ->
@@ -809,7 +809,7 @@ send_all_data_to_gui(State, #state{config=#config{problems=Problems},
 
 %% @doc Send a kill message to all workers. They should all answer worker_stopped,
 %% thereby ending the round, should one be running.
--spec kill_all_workers(atom(), dict()) -> ok.
+-spec kill_all_workers(atom(), worker_dict()) -> ok.
 kill_all_workers(State, WorkerDict) ->
 
     ok = lager:info("DJ killing all workers in state ~p", [State]),
@@ -826,7 +826,7 @@ kill_all_workers(State, WorkerDict) ->
 %% @doc Change worker according to the validation result of his proposition.
 %% The proposition is saved as his last proposition and in the case that the
 %% proposition is invalid the worker is blocked.
--spec process_validated_proposition(worker_id(), string(), integer(), string(), dict()) -> dict().
+-spec process_validated_proposition(worker_id(), string(), integer(), string(), worker_dict()) -> worker_dict().
 process_validated_proposition(WorkerID, WorkerOutput, Score, Caption, WorkerDict) ->
 
     MaxBlockIdx = get_max_block_idx(WorkerDict),
@@ -864,7 +864,7 @@ process_validated_proposition(WorkerID, WorkerOutput, Score, Caption, WorkerDict
 
 
 %% @doc Return only the workers that are not blocked.
--spec get_unblocked_workers(dict()) -> dict().
+-spec get_unblocked_workers(worker_dict()) -> worker_dict().
 get_unblocked_workers(WorkerDict) ->
     dict:filter(fun(_WorkerID,#worker{blocked=Blocked}) -> Blocked == no end, WorkerDict).
 
@@ -873,7 +873,7 @@ get_unblocked_workers(WorkerDict) ->
 %% When workers are blocked they get a blocking index to later determine the
 %% order in which workers where blocked. This function returns the highest block
 %% index so the next blocked worker could get the next index.
--spec get_max_block_idx(dict()) -> non_neg_integer().
+-spec get_max_block_idx(worker_dict()) -> non_neg_integer().
 get_max_block_idx(WorkerDict) ->
     dict:fold(fun(_Key, #worker{blocked=Blocked}, Max) ->
                       case Blocked of

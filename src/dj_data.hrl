@@ -25,9 +25,11 @@
           ranking_group             = ""    :: string(),
           blocked                   = no    :: no | {idx, non_neg_integer()}}).
 
+-type worker_dict() :: dict:dict(worker_id(),#worker{}).
+
 %% state data
 -record(state, {config        = #config{}  :: #config{},
-                workers       = dict:new() :: dict(),
+                workers       = dict:new() :: worker_dict(),
                 problem_idx   = 0          :: non_neg_integer(),
                 round         = 0          :: non_neg_integer(),
                 problem_state = ""         :: string(),
