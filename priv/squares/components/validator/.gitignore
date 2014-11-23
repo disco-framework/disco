@@ -1,3 +1,5 @@
 *.hi
 *.o
-validator
+dist/
+cabal.sandbox.config
+.cabal-sandbox/

@@ -1,22 +1,29 @@
-BINARY = validator
-GHC_OPTS = -Wall -O2
+BINARY = dist/build/validator/validator
 PROF_OPTS = -prof -auto-all -caf-all -fforce-recomp
 
-.PHONY: all compile run clean hlint
+.PHONY: all compile configure run clean hlint init-sandbox
 
 all: compile
 
-compile:
-	ghc --make Main -o $(BINARY) $(GHC_OPTS)
+.cabal.sandbox:
+	cabal sandbox init
 
-prof-compile:
-	ghc --make Main -o $(BINARY)-prof $(GHC_OPTS) $(PROF_OPTS)
+prepare: .cabal.sandbox
+	cabal install --only-dependencies
+	cabal configure
+
+compile: prepare
+	cabal build
+
+prof-compile: prepare
+	cabal build --ghc-options='-o $(BINARY)-prof $(PROF_OPTS)'
 
 run:
 	@./$(BINARY)
 
 clean:
-	rm -f *.o *.hi $(BINARY) $(BINARY).prof $(BINARY)-prof
+	cabal clean
+	rm -f $(BINARY).prof $(BINARY)-prof
 
 hlint:
 	hlint *.hs
