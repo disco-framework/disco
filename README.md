@@ -32,7 +32,7 @@ To use the DisCo framework for your own contest, you should provide at least you
  - `python`, `pyqt4-dev-tools` (for general gui component)
  - `python3` (only for the integration tests)
 
-#### For example contest
+#### For the 'countdown2' example contest
 - Install `haskell-platform`
 - For the validator component
   - Json package: `cabal update && cabal install json`
