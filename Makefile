@@ -104,19 +104,27 @@ clean_all: clean
 	rm -rf log/
 	rm -rf autosaves/
 
+#
+# TESTS
+#
+
+.PHONY: test_all
+
+test_all: dialyze eunit_test integration_test
+	@echo "-- all tests successful! --"
 
 #
 # eunit
 #
 
-.PHONY: test
+.PHONY: eunit_test
 
-test: compile
+eunit_test: compile
 	$(PRINT_CAPTION)
 	$(REBAR) eunit skip_deps=true
-	xdg-open eunit.html &
+#	xdg-open eunit.html &
 
-test_%: compile ./src/test/%_tests.erl
+eunit_test_%: compile ./src/test/%_tests.erl
 	$(PRINT_CAPTION)
 	$(REBAR) eunit skip_deps=true suites=$*
 	xdg-open .eunit/index.html &
@@ -125,12 +133,13 @@ test_%: compile ./src/test/%_tests.erl
 # integration test
 #
 
-.PHONY: integration-test
+.PHONY: integration_test
 
-integration-test:
+integration_test:
 	$(MAKE) -s CONFIG_FILE=integration-test.config COVER_ENABLED=true run
 	@echo "-- INTEGRATION TEST RESULTS --"
 	@less -SFX log/integration-test.log
+	@tail -n1 log/integration-test.log | grep OK
 
 #
 # dialyzer
