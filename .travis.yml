@@ -3,6 +3,8 @@ language: erlang
 otp_release:
   - 17.0
 
-sudo: false
-
 script: "make test_all"
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install python3
