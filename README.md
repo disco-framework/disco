@@ -73,6 +73,10 @@ All these should succeed:
 
 executed via
 
+    make test_all
+
+or individually
+
     make dialyze
     make test
     make integration-test
