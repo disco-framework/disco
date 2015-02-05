@@ -8,7 +8,6 @@ plt
 doc/edoc/
 apps/worker/doc/edoc/
 apps/worker/doc/edoc.css
-doc/users-guide/
 doc/users-guide/disco-users-guide.aux
 doc/users-guide/disco-users-guide.fdb_latexmk
 doc/users-guide/disco-users-guide.fls
