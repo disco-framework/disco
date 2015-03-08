@@ -138,7 +138,7 @@ eunit_test_%: compile ./src/test/%_tests.erl
 integration_test:
 	$(MAKE) -s CONFIG_FILE=integration-test.config COVER_ENABLED=true run
 	@echo "-- INTEGRATION TEST RESULTS --"
-	@less -SFX log/integration-test.log
+	@cat log/integration-test.log
 	@tail -n1 log/integration-test.log | grep OK
 
 #
