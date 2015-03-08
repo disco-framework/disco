@@ -30,7 +30,7 @@
                   {cluster_start_mode, sequential},  %% :: sequential | parallel
                   {startup_slice_size, 10},          %% :: pos_integer()
 
-                  {score_mode, ranked},
+                  {score_mode, ranked}, %% :: raw | normalized | ranked
 
                   %% timeouts for startup tests. The startup tests determines whether
                   %% the executables throw an error during this time after they're
