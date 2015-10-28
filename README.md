@@ -30,7 +30,7 @@ To use the DisCo framework for your own contest, you should provide at least you
  - ssh client (e.g. `openssh`)
  - `ip` (to find out local ip address on the server)
  - `rsync`
- - `python`, `pyqt4-dev-tools` (for general gui component)
+ - `python`, `pyqt4-dev-tools`/`PyQt4-devel` (for general gui component)
  - `python3` (only for the integration tests)
 
 #### For the 'countdown2' example contest
