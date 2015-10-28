@@ -679,7 +679,7 @@ calc_and_send_normalized_scores(ScoreMode, WorkerDict) ->
                                          no ->
                                              Worker#worker{
                                                last_prop_processed_score =
-                                                   apply(ProcScoreFun, [Score])
+                                                   ProcScoreFun(Score)
                                               };
                                          {idx, _} -> Worker
                                      end
