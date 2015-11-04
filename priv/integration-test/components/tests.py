@@ -104,27 +104,66 @@ class TestDiscoFramework(unittest.TestCase):
         self.assertEqual('worker input changed', input_changed_msg['event'])
         self.assertEqual(['[20]', '42'],         input_changed_msg['worker input'])
 
-    def test_5_save_apply_load(self):
-        # TODO test saving and loading game state
-        # as well as applying propositions (we need a state change to test
+    def test_5_save_add_load(self):
+        # test saving and loading game state
+        # as well as adding scores (we need a state change to test
         # loading the savegame anyway)
-        # Order: Save, Apply Proposition, Check, Load, Check
-        clear_mailbox("apply load")
+        clear_mailbox("save add load")
+
         filepath = '/tmp/disco-test-savegame.sav'
+        filepath2 = '/tmp/disco-test-savegame2.sav'
+
+        # create first savegame
         print(json.dumps({'action': 'save game state', 'file path': filepath}))
         result_msg = read_json()
         self.assertEqual('save game state', result_msg['event'])
         self.assertEqual('ok',              result_msg['result'])
+
+        # change state (add scores)
+        print(json.dumps({'action': 'add scores'}))
+        worker_updated_msg = read_json()
+        self.assertEqual('worker updated', worker_updated_msg['event'])
+        self.assertEqual(['pwb_00', '[(0,0,10)]', '[10] 42', 42, 42, 42, 'no', False], worker_updated_msg['worker data'])
+
+        # create second savegame
+        print(json.dumps({'action': 'save game state', 'file path': filepath2}))
+        result_msg = read_json()
+        self.assertEqual('save game state', result_msg['event'])
+        self.assertEqual('ok',              result_msg['result'])
+
+        # load first savegame
+        print(json.dumps({'action': 'load game state', 'file path': filepath}))
+        load_result_msg = read_json()
+        self.assertEqual('load game state', load_result_msg['event'])
+        self.assertEqual('ok', load_result_msg['result'])
+
+        # worker should be in pre-add state
+        full_state_msg = read_json()
+        self.assertEqual('all data', full_state_msg['event'])
+        self.assertEqual([['pwb_00', 'test-worker', '', '[(0,0,10)]', '[10] 42', 42, 42, 0, 'no', False]],
+                         full_state_msg['workers'])
+
+        # load second save game
+        print(json.dumps({'action': 'load game state', 'file path': filepath2}))
+        load_result_msg = read_json()
+        self.assertEqual('load game state', load_result_msg['event'])
+        self.assertEqual('ok', load_result_msg['result'])
+
+        # worker should have added scores
+        full_state_msg = read_json()
+        self.assertEqual('all data', full_state_msg['event'])
+        self.assertEqual([['pwb_00', 'test-worker', '', '[(0,0,10)]', '[10] 42', 42, 42, 42, 'no', False]],
+                         full_state_msg['workers'])
 
     def test_6_manually_end_round(self):
         # TODO start a very long round and test that the round can be ended manually
         clear_mailbox("manually end round")
         print("!! missing test for manually ending a round", file=sys.stderr)
 
-    def test_7_add_scores(self):
+    def test_7_apply_proposition(self):
         # TODO
-        clear_mailbox("add scores")
-        print("!! missing test for adding scores", file=sys.stderr)
+        clear_mailbox("apply proposition")
+        print("!! missing test for applying propositions", file=sys.stderr)
 
 
 if __name__ == '__main__':
