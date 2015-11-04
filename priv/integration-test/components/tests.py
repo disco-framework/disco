@@ -89,22 +89,7 @@ class TestDiscoFramework(unittest.TestCase):
         self.assertEqual('worker input changed', input_change_msg['event'])
         self.assertEqual(['[10]','42'], input_change_msg['worker input'])
 
-    def test_4_choose_problem(self):
-        clear_mailbox("choose problem")
-        print(json.dumps({'action': 'choose problem', 'problem idx': 1}))
-        update_msg = read_json()
-        self.assertEqual('problem chosen', update_msg['event'])
-        self.assertEqual(1,                update_msg['problem idx'])
-
-        state_changed_msg = read_json() # "problem state changed"
-        self.assertEqual('problem state changed', state_changed_msg['event'])
-        self.assertEqual('[1]',                   state_changed_msg['problem state'])
-
-        input_changed_msg = read_json() # "worker input changed"
-        self.assertEqual('worker input changed', input_changed_msg['event'])
-        self.assertEqual(['[20]', '42'],         input_changed_msg['worker input'])
-
-    def test_5_save_add_load(self):
+    def test_4_save_add_load(self):
         # test saving and loading game state
         # as well as adding scores (we need a state change to test
         # loading the savegame anyway)
@@ -155,12 +140,50 @@ class TestDiscoFramework(unittest.TestCase):
         self.assertEqual([['pwb_00', 'test-worker', '', '[(0,0,10)]', '[10] 42', 42, 42, 42, 'no', False]],
                          full_state_msg['workers'])
 
-    def test_6_manually_end_round(self):
-        # TODO start a very long round and test that the round can be ended manually
-        clear_mailbox("manually end round")
-        print("!! missing test for manually ending a round", file=sys.stderr)
+    def test_5_choose_problemand_manually_end_round(self):
+        clear_mailbox("choose problem and manually end round")
+        print(json.dumps({'action': 'choose problem', 'problem idx': 1}))
+        update_msg = read_json()
+        self.assertEqual('problem chosen', update_msg['event'])
+        self.assertEqual(1,                update_msg['problem idx'])
 
-    def test_7_apply_proposition(self):
+        state_changed_msg = read_json() # "problem state changed"
+        self.assertEqual('problem state changed', state_changed_msg['event'])
+        self.assertEqual('[1]',                   state_changed_msg['problem state'])
+
+        input_changed_msg = read_json() # "worker input changed"
+        self.assertEqual('worker input changed', input_changed_msg['event'])
+        self.assertEqual(['[20]', '42'],         input_changed_msg['worker input'])
+
+        # TODO find out why this is necessary. The worker seems to be in a bad state. Why?
+        print(json.dumps({'action': 'kill all workers'}))
+
+        # start round
+        print(json.dumps({'action': 'start round'}))
+        self.assertEqual('worker updated', read_json()['event'])
+        self.assertEqual('round started', read_json()['event'])
+        self.assertEqual('worker updated', read_json()['event'])
+
+        # manually end round
+        print(json.dumps({'action': 'kill all workers'}))
+
+        not_running_msg = read_json()
+        self.assertEqual('worker updated', not_running_msg['event'])
+        self.assertEqual(['pwb_00', '[(0,0,20)]', '[20] 42', 42, 0, 42, 'no', False], not_running_msg['worker data'])
+
+        stop_msg = read_json()
+        self.assertEqual('round ended', stop_msg['event'])
+        self.assertEqual(1,             stop_msg['round number'])
+
+        worker_update_msg = read_json()
+        self.assertEqual('worker updated', worker_update_msg['event'])
+        self.assertEqual(['pwb_00', '[(0,0,20)]', '[20] 42', 42, 42, 42, 'no', False], worker_update_msg['worker data'])
+
+        input_change_msg = read_json()
+        self.assertEqual('worker input changed', input_change_msg['event'])
+        self.assertEqual(['[20]','42'], input_change_msg['worker input'])
+
+    def test_6_apply_proposition(self):
         # TODO
         clear_mailbox("apply proposition")
         print("!! missing test for applying propositions", file=sys.stderr)
