@@ -23,7 +23,7 @@ def read_json():
 def clear_mailbox(test_name):
     while select.select([sys.stdin], [], [], 0.01) == ([sys.stdin], [], []):
         line = input()
-        print("input skipped in \"" + test_name + "\" test: " + line, file=sys.stderr)
+        print("!! input skipped in \"" + test_name + "\" test: " + line, file=sys.stderr)
 
 class TestDiscoFramework(unittest.TestCase):
 
@@ -84,6 +84,10 @@ class TestDiscoFramework(unittest.TestCase):
         worker_update_msg = read_json() # "worker updated"
         self.assertEqual('worker updated', worker_update_msg['event'])
         self.assertEqual(['pwb_00', '[(0,0,10)]', '[10] 42', 42, 42, 0, 'no', False], worker_update_msg['worker data'])
+
+        input_change_msg = read_json()
+        self.assertEqual('worker input changed', input_change_msg['event'])
+        self.assertEqual(['[10]','42'], input_change_msg['worker input'])
 
     def test_4_choose_problem(self):
         clear_mailbox("choose problem")
