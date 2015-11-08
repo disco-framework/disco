@@ -4,7 +4,7 @@ require 'json'
 
 def change_state state, proposition
   # dummy implementation: string-concat
-  state + "\n" + proposition
+  [state, proposition].join("\n")
 end
 
 acc = ""

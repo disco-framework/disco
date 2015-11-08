@@ -10,6 +10,10 @@ import unittest
 # use JSON to communicate with framework
 # execute with "make integration-test" in project root
 
+# CAREFUL: All the tests depend on each other.
+# They are executed in alphabetical order and are only running correctly in
+# exactly this order.
+
 # test case ideas
   # worker generates some valid propositions
     # last gets counted, worker stays active
@@ -26,10 +30,6 @@ def clear_mailbox(test_name):
         print("!! input skipped in \"" + test_name + "\" test: " + line, file=sys.stderr)
 
 class TestDiscoFramework(unittest.TestCase):
-
-    def setUp(self):
-        # executed before each test case
-        self.some_attribute = "some value"
 
     # tests are sorted by name. This is important because these tests are order dependent.
     def test_1_all_data(self):
@@ -160,9 +160,9 @@ class TestDiscoFramework(unittest.TestCase):
 
         # start round
         print(json.dumps({'action': 'start round'}))
-        self.assertEqual('worker updated', read_json()['event'])
+        self.assertEqual('worker updated', read_json()['event']) # worker running
         self.assertEqual('round started', read_json()['event'])
-        self.assertEqual('worker updated', read_json()['event'])
+        self.assertEqual('worker updated', read_json()['event']) # worker submitted proposition
 
         # manually end round
         print(json.dumps({'action': 'kill all workers'}))
@@ -184,9 +184,16 @@ class TestDiscoFramework(unittest.TestCase):
         self.assertEqual(['[20]','42'], input_change_msg['worker input'])
 
     def test_6_apply_proposition(self):
-        # TODO
         clear_mailbox("apply proposition")
-        print("!! missing test for applying propositions", file=sys.stderr)
+        print(json.dumps({'action': 'apply proposition', 'worker id': 'pwb_00'}))
+
+        message = read_json()
+        self.assertEqual('problem state changed', message['event'])
+        self.assertEqual('[1]\n[(0,0,20)]', message['problem state'])
+
+        message = read_json()
+        self.assertEqual('worker input changed', message['event'])
+        self.assertEqual(['[20]', '42'], message['worker input'])
 
 
 if __name__ == '__main__':
