@@ -14,10 +14,11 @@ import unittest
 # They are executed in alphabetical order and are only running correctly in
 # exactly this order.
 
-# test case ideas
+# TODO additional test case ideas
   # worker generates some valid propositions
     # last gets counted, worker stays active
   # worker generates invalid proposition
+  # load multiple prepared invalid savegame files to test savegame error handling
 
 def read_json():
     line = input()
