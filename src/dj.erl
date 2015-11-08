@@ -678,10 +678,10 @@ calc_and_send_normalized_scores(ScoreMode, WorkerDict) ->
                                      case Blocked of
                                          no ->
                                              Worker#worker{
-                                               last_prop_processed_score=
-                                                   apply(ProcScoreFun, [Score])
+                                               last_prop_processed_score =
+                                                   ProcScoreFun(Score)
                                               };
-                                         _ -> Worker
+                                         {idx, _} -> Worker
                                      end
                              end,
                              WorkerDict),
