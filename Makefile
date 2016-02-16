@@ -159,7 +159,7 @@ check_plt: $(PLT)
 
 dialyze: compile $(PLT)
 	$(PRINT_CAPTION)
-	dialyzer $(DIALYZER_OPTS) | $(FILTER_WARNINGS)
+	$(REBAR) dialyzer | $(FILTER_WARNINGS) # readd $(DIALYZER_OPTS) when known how to do that
 
 wunder-dialyze: compile $(PLT)
 	$(PRINT_CAPTION)
