@@ -5,6 +5,8 @@ otp_release:
   - 17.5
   - 18.2
 
+install: []
+
 script:
   - make test_all
 
