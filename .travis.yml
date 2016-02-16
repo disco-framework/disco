@@ -5,7 +5,8 @@ otp_release:
   - 17.5
   - 18.2
 
-script: "make test_all"
+script:
+  - make test_all
 
 sudo: false
 
