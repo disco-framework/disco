@@ -78,8 +78,8 @@ executed via
 or individually
 
     make dialyze
-    make test
-    make integration-test
+    make eunit_test
+    make integration_test
 
 ### Project structure
 
