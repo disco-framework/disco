@@ -93,7 +93,7 @@ start(_StartType, _StartArgs) ->
                             ok = lager:info("...validator ready"),
 
                             ok = lager:info("Starting changer..."),
-                            {ok, _} = changer:start_link(ChangerProg),
+                            {ok, _} = changer_sup:start_link(ChangerProg),
                             ok = lager:info("...changer ready"),
 
                             ok = lager:info("Starting dj..."),
