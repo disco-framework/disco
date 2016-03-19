@@ -11,4 +11,3 @@ apps/worker/doc/edoc.css
 doc/users-guide/overview-eps-converted-to.pdf
 integration-coverage/
 .rebar
-rebar.lock
