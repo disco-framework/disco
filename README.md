@@ -24,7 +24,7 @@ To use the DisCo framework for your own contest, you should provide at least you
 ### Prerequisites
 
  - Linux
- - Erlang R16B or 17
+ - Erlang R16B, 17 or 18
  - `make`
  - `git` (to automatically download erlang dependencies)
  - ssh client (e.g. `openssh`)
