@@ -192,12 +192,12 @@ expr_to_s({app, Op, A, B}) ->
     "(" ++ expr_to_s(A) ++ " " ++ atom_to_list(Op) ++ " " ++ expr_to_s(B) ++ ")".
 
 print_prefix(StartTime, Process, Comp) ->
-    Age = timer:now_diff(now(), StartTime) / 1000 / 1000,
+    Age = timer:now_diff(erlang:timestamp(), StartTime) / 1000 / 1000,
     io:format(standard_error, "~n[~7.3fs, ~p, ~12B]  ", [Age, Process, Comp]).
 
 printer() ->
   process_flag(priority, high),
-  printer_loop(now(), 0).
+  printer_loop(erlang:timestamp(), 0).
 
 -spec printer_loop(erlang:timestamp(), non_neg_integer()) -> no_return().
 printer_loop(StartTime, Best) ->
