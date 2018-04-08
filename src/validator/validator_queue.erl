@@ -18,7 +18,7 @@
 
 -module(validator_queue).
 
--behavior(gen_fsm).
+-behavior(gen_statem).
 
 -include("validator_data.hrl").
 
@@ -37,18 +37,14 @@
          put_score/3
         ]).
 
-%% called by gen_fsm module
+%% called by gen_statem module
 -export([
          init/1,
-         handle_event/3,
-         handle_sync_event/4,
-         handle_info/3,
          terminate/3,
          code_change/4,
+         callback_mode/0,
          %% custom state names
-         empty/2,
          empty/3,
-         non_empty/2,
          non_empty/3
         ]).
 
@@ -65,24 +61,24 @@
 
 -spec start_link() -> ignore | {error, _} | {ok, pid()}.
 start_link() ->
-    gen_fsm:start_link({local, ?REG_NAME}, ?MODULE, [], []).
+    gen_statem:start_link({local, ?REG_NAME}, ?MODULE, [], []).
 
 -spec insert_proposition(worker_id(), [string()], string()) -> ok.
 insert_proposition(WorkerID, WorkerInput, WorkerOutput) ->
     Proposition = {WorkerID, WorkerInput, WorkerOutput},
-    gen_fsm:send_all_state_event(?REG_NAME, {insert, Proposition}).
+    gen_statem:cast(?REG_NAME, {insert, Proposition}).
 
 %% @doc For debugging: Returns the content of the queue
 get_queue_content() ->
-    gen_fsm:sync_send_all_state_event(?REG_NAME, get_queue_content).
+    gen_statem:call(?REG_NAME, get_queue_content).
 
 -spec round_started() -> ok.
 round_started() ->
-    gen_fsm:send_all_state_event(?REG_NAME, round_started).
+    gen_statem:cast(?REG_NAME, round_started).
 
 -spec all_workers_stopped() -> ok.
 all_workers_stopped() ->
-    gen_fsm:send_event(?REG_NAME, all_workers_stopped).
+    gen_statem:cast(?REG_NAME, all_workers_stopped).
 
 %% ===================================================================
 %% application programming interface for validator port
@@ -91,33 +87,43 @@ all_workers_stopped() ->
 %% @doc Fetches a proposition, blocking the calling thread if queue is empty.
 -spec get_proposition() -> proposition().
 get_proposition() ->
-    gen_fsm:sync_send_event(?REG_NAME, get_proposition, infinity).
+    gen_statem:call(?REG_NAME, get_proposition, infinity).
 
 %% @doc Returns a validation result.
 -spec put_score(proposition(), non_neg_integer(), string()) -> ok.
 put_score(Proposition, Score, Caption) ->
-    gen_fsm:send_event(?REG_NAME, {put_score, Proposition, Score, Caption}).
+    gen_statem:cast(?REG_NAME, {put_score, Proposition, Score, Caption}).
 
 
 %% ===================================================================
-%% gen_fsm callbacks
+%% gen_statem callbacks
 %% ===================================================================
 
+callback_mode() ->
+    state_functions.
 
 init([]) ->
     {ok, empty, #state{}}.
 
 %% -- state callbacks --
 
-empty(all_workers_stopped, Data) ->
+empty(cast, all_workers_stopped, Data) ->
     dj:validator_queue_empty(),
-    {next_state, empty, Data#state{workers_working=false}};
+    {keep_state, Data#state{workers_working=false}};
 
-empty(Msg, Data) ->
-    unexpected(Msg, empty),
-    {reply, unexpected, empty, Data}.
+empty(cast, {insert, Prop}, Data=#state{queue=Queue,
+                                                waiting_validator=WaitingValidator}) ->
+    NewQueue = queue:in(Prop, Queue),
+    case WaitingValidator of
+        none ->
+            {next_state, non_empty, Data#state{queue=NewQueue}};
+        _FromSpec ->
+            gen_statem:reply(WaitingValidator, Prop),
+            {next_state, non_empty, Data#state{waiting_validator=none,
+                                               queue=NewQueue}}
+    end;
 
-empty(get_proposition, From, Data=#state{waiting_validator=WaitingValidator}) ->
+empty({call, From}, get_proposition, Data=#state{waiting_validator=WaitingValidator}) ->
     %% If a waiting validator crashes, there will be a new validator process
     %% asking for a proposition. In this case, the old process ID will be overwritten.
     case WaitingValidator of
@@ -127,15 +133,14 @@ empty(get_proposition, From, Data=#state{waiting_validator=WaitingValidator}) ->
             ok = lager:warning("Validator queue received get_proposition from ~p, overriding the already waiting validator ~p", [From, WaitingValidator])
     end,
     %% reply later, when there are elements in the queue (blocking call)
-    {next_state, empty, Data#state{waiting_validator=From}};
+    {keep_state, Data#state{waiting_validator=From}};
 
-empty(Msg, _From, Data) ->
-    unexpected(Msg, empty),
-    {reply, unexpected, empty, Data}.
+empty(Type, Msg, Data) ->
+    handle_event(Type, Msg, empty, Data).
 
 %% -----
 
-non_empty({put_score, Prop, Score, Caption}, Data=#state{queue=Queue, workers_working=WorkersWorking}) ->
+non_empty(cast, {put_score, Prop, Score, Caption}, Data=#state{queue=Queue, workers_working=WorkersWorking}) ->
     case queue:out(Queue) of
         {{value, Prop}, NewQueue} ->
             {WorkerID, WorkerInput, WorkerOutput} = Prop,
@@ -148,72 +153,44 @@ non_empty({put_score, Prop, Score, Caption}, Data=#state{queue=Queue, workers_wo
                         false -> dj:validator_queue_empty();
                         _ -> ok
                     end,
-                    {next_state, empty,     Data#state{queue=NewQueue}};
+                    {next_state, empty, Data#state{queue=NewQueue}};
                 false ->
-                    {next_state, non_empty, Data#state{queue=NewQueue}}
+                    {keep_state, Data#state{queue=NewQueue}}
             end;
         {{value, _}, _} ->
             ok = lager:warning("Validator queue received score for unexpected proposition: ~p~nQueue content: ~p",
                           [Prop, queue:to_list(Queue)]),
-            {next_state, non_empty, Data#state{queue=Queue}};
+            {keep_state, Data#state{queue=Queue}};
         {empty, _} ->
             ok = lager:critical("Validator queue is empty in nonempty state!"),
             {next_state, empty, Data#state{queue=Queue}}
     end;
 
-non_empty(all_workers_stopped, Data) ->
-    {next_state, non_empty, Data#state{workers_working=false}};
+non_empty(cast, all_workers_stopped, Data) ->
+    {keep_state, Data#state{workers_working=false}};
 
-non_empty(Event, Data) ->
-    unexpected(Event, non_empty),
-    {next_state, non_empty, Data}.
-
-
-non_empty(get_proposition, _From, Data=#state{queue=Queue}) ->
-    case queue:out(Queue) of
-        {{value, Prop}, _} ->
-            {reply, Prop, non_empty, Data};
-        {empty, _} ->
-            ok = lager:critical("Validator queue is empty in nonempty state!"),
-            {reply, queue_error, empty, Data}
-    end;
-
-non_empty(Event, _From, Data) ->
-    unexpected(Event, non_empty),
-    {reply, unexpected, non_empty, Data}.
-
-
-%% -- stateless callbacks --
-
-handle_event({insert, Prop}, State, Data=#state{queue=Queue,
-                                                waiting_validator=WaitingValidator}) ->
+non_empty(cast, {insert, Prop}, Data=#state{queue=Queue,
+                                            waiting_validator=WaitingValidator}) ->
     NewQueue = queue:in(Prop, Queue),
     case WaitingValidator of
         none ->
-            {next_state, non_empty, Data#state{queue=NewQueue}};
+            {keep_state, Data#state{queue=NewQueue}};
         _FromSpec ->
-            case State of
-                non_empty ->
-                    ok = lager:critical("There should not be a waiting validator when the queue is not empty!"),
-                    throw(validator_queue_corrupted);
-                empty ->
-                    gen_fsm:reply(WaitingValidator, Prop),
-                    {next_state, non_empty, Data#state{waiting_validator=none,
-                                                       queue=NewQueue}}
-            end
+            ok = lager:critical("There should not be a waiting validator when the queue is not empty!"),
+            throw(validator_queue_corrupted)
     end;
-handle_event(round_started, State, Data) ->
-    {next_state, State, Data#state{workers_working=true}};
-handle_event(Event, State, Data) ->
-    unexpected(Event, State),
-    {next_state, State, Data}.
 
+non_empty({call, From}, get_proposition, Data=#state{queue=Queue}) ->
+    case queue:out(Queue) of
+        {{value, Prop}, _} ->
+            {keep_state_and_data, {reply, From, Prop}};
+        {empty, _} ->
+            ok = lager:critical("Validator queue is empty in nonempty state!"),
+            {next_state, empty, Data, {reply, From, queue_error}}
+    end;
 
-handle_sync_event(get_queue_content, _From, State, Data=#state{queue=Queue}) ->
-    {reply, queue:to_list(Queue), State, Data};
-handle_sync_event(Event, _From, State, Data) ->
-    unexpected(Event, State),
-    {reply, unexpected, State, Data}.
+non_empty(Type, Msg, Data) ->
+    handle_event(Type, Msg, non_empty, Data).
 
 
 %% -----
@@ -226,19 +203,21 @@ code_change(_OldVsn, DataName, Data, _Extra) ->
 terminate(_Msg, _StateName, _Data) ->
     ok.
 
-handle_info(Info, State, Data) ->
-    unexpected(Info, State),
-    {next_state, State, Data}.
-
 
 %% ===================================================================
 %% private functions
 %% ===================================================================
 
-%% Unexpected allows to log unexpected messages
--spec unexpected(term(), atom()) -> any().
-unexpected(Msg, State) ->
-    ok = lager:error("Validator queue received unknown event ~p while in state ~p",
-                [Msg, State]).
+%% -- stateless callbacks --
+
+handle_event(cast, round_started, _State, Data) ->
+    {keep_state, Data#state{workers_working=true}};
+handle_event({call, From}, get_queue_content, _State, Data=#state{queue=Queue}) ->
+    {keep_state, Data, [{reply, From, queue:to_list(Queue)}]};
+handle_event(Type, Msg, State, Data) ->
+    ok = lager:error("Validator queue received unknown event ~p from ~p while in state ~p",
+                [Msg, Type, State]),
+    {keep_state, Data}.
+
 
 %% ===================================================================
