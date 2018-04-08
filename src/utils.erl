@@ -73,7 +73,7 @@ pmap(Fun, List) ->
 
 %% @doc we need this proxy function for mocking
 %% because meck can't mock the "init" module
--spec get_argument(atom()) -> error | {ok, term()}.
+-spec get_argument(atom()) -> error | {ok, [[[any()]]]}.
 get_argument(Flag) ->
     init:get_argument(Flag).
 
