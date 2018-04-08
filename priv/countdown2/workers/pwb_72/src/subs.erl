@@ -32,7 +32,6 @@ get_package(Provider) ->
 provider(Name, Numbers, ChunkSize, Spawner) ->
     register(Name, self()),
     Spawner ! {providing, self()},
-    _ = random:seed(random:seed0()),
     MagicNumber = 7,
     {RawSmallSubs, RawLargeSubs} = lists:splitwith(
                                      fun(Sub) ->
@@ -90,7 +89,7 @@ randomize(T, List) ->
 
 randomize(List) ->
     D = lists:map(fun(A) ->
-                          {random:uniform(), A}
+                          {rand:uniform(), A}
                   end, List),
 
     {_, D1} = lists:unzip(lists:keysort(1, D)),

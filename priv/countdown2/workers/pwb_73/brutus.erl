@@ -39,7 +39,7 @@ uniq_slices(Numbers) -> Slices = [ begin {L1, [X|L2]} = lists:split(N, Numbers),
 
 
 -spec shuffle( [ term() ] ) -> [ term() ].
-shuffle(Lst) -> [ X || {_, X} <- lists:sort([ {random:uniform(), N} || N <- Lst ]) ].
+shuffle(Lst) -> [ X || {_, X} <- lists:sort([ {rand:uniform(), N} || N <- Lst ]) ].
 
 
 -spec thousand_separator( integer() ) -> string().
@@ -52,7 +52,7 @@ thousand_separator(Num) -> {Res, _} = lists:foldr(fun(A, {Acc, 3}) -> {[A|[$,|Ac
 
 
 -spec current_time_us() -> integer().
-current_time_us() -> {MegaSecs, Secs, MicroSecs} = erlang:now(),
+current_time_us() -> {MegaSecs, Secs, MicroSecs} = erlang:timestamp(),
                      (MegaSecs * 1000000 + Secs) * 1000000 + MicroSecs.
 
 
