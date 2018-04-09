@@ -29,13 +29,13 @@ LOG_LEVEL              = info
     NODE_NAME          = disco
 
     ## erlang bytecode location
-    BEAM_DIRS          = ebin/ apps/*/ebin/ deps/*/ebin/
+    BEAM_DIRS          = _build/default/lib/*/ebin/
 
     ## erlang 'magic cookie' for node authentication
     ERL_COOKIE         = disco_framework_erl_secret
 
 ## erlang build tool
-REBAR                  = ./rebar
+REBAR                  = ./rebar3
 
 ## code coverage, should only be enabled for integration test
 COVER_ENABLED          = false
@@ -52,16 +52,11 @@ endif
 
 PRINT_CAPTION          = @echo ""; echo "===== $@ ====="
 
-.PHONY: all get-deps update-deps compile distribute run doc clean clean_all
+.PHONY: all compile distribute run doc clean clean_all
 
 all: run
 
-get-deps:
-	$(PRINT_CAPTION)
-	$(REBAR) $@
-
-update-deps \
-compile: get-deps
+compile:
 	$(PRINT_CAPTION)
 	$(REBAR) $@
 
@@ -136,7 +131,7 @@ eunit_test_%: compile ./src/test/%_tests.erl
 .PHONY: integration_test
 
 integration_test:
-	$(MAKE) -s CONFIG_FILE=integration-test.config COVER_ENABLED=true run
+	$(MAKE) -s CONFIG_FILE=integration-test.config COVER_ENABLED=false run
 	@echo "-- INTEGRATION TEST RESULTS --"
 	@cat log/integration-test.log
 	@tail -n1 log/integration-test.log | grep OK
@@ -164,7 +159,7 @@ check_plt: $(PLT)
 
 dialyze: compile $(PLT)
 	$(PRINT_CAPTION)
-	dialyzer $(DIALYZER_OPTS) | $(FILTER_WARNINGS)
+	$(REBAR) dialyzer | $(FILTER_WARNINGS) # readd $(DIALYZER_OPTS) when known how to do that
 
 wunder-dialyze: compile $(PLT)
 	$(PRINT_CAPTION)

@@ -7,7 +7,10 @@ otp_release:
   - 19.3
   - 20.3
 
-script: "make test_all"
+install: []
+
+script:
+  - make test_all
 
 sudo: false
 
