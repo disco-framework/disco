@@ -141,7 +141,7 @@ class TestDiscoFramework(unittest.TestCase):
         self.assertEqual([['pwb_00', 'test-worker', '', '[(0,0,10)]', '[10] 42', 42, 42, 42, 'no', False]],
                          full_state_msg['workers'])
 
-    def test_5_choose_problemand_manually_end_round(self):
+    def test_5_choose_problem_and_manually_end_round(self):
         clear_mailbox("choose problem and manually end round")
         print(json.dumps({'action': 'choose problem', 'problem idx': 1}))
         update_msg = read_json()

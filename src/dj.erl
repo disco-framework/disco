@@ -35,7 +35,7 @@
 
 -module(dj).
 
--behavior(gen_fsm).
+-behavior(gen_statem).
 
 -include("dj_data.hrl").
 
@@ -59,22 +59,16 @@
          validator_queue_empty/0
         ]).
 
-%% called by gen_fsm module
+%% called by gen_statem module
 -export([
          init/1,
-         handle_event/3,
-         handle_sync_event/4,
-         handle_info/3,
          terminate/3,
          code_change/4,
-
+         callback_mode/0,
          %% these get called for incoming messages
          %% according to the current state
-         ready/2,
          ready/3,
-         running/2,
          running/3,
-         waiting_for_validator/2,
          waiting_for_validator/3
         ]).
 
@@ -87,84 +81,87 @@
 
 -spec start_link() -> ignore | {error, _} | {ok, pid()}.
 start_link() ->
-    gen_fsm:start_link(?REG_NAME, ?MODULE, [], []).
+    gen_statem:start_link(?REG_NAME, ?MODULE, [], []).
 
 %% called by gui:
 
 -spec choose_problem(non_neg_integer()) -> ok.
 choose_problem(ProblemIdx) ->
-    gen_fsm:send_event(?REG_NAME, {choose_problem, ProblemIdx}).
+    gen_statem:cast(?REG_NAME, {choose_problem, ProblemIdx}).
 
 -spec start_round() -> ok.
 start_round() ->
-    gen_fsm:send_event(?REG_NAME, start_round).
+    gen_statem:cast(?REG_NAME, start_round).
 
 %% @doc Send a kill message to all workers. This ends the currently
 %% running round.
 -spec kill_all_workers() -> ok.
 kill_all_workers() ->
-    gen_fsm:send_all_state_event(?REG_NAME, kill_all_workers).
+    gen_statem:cast(?REG_NAME, kill_all_workers).
 
 -spec load_game_state(file:filename()) -> ok.
 load_game_state(FilePath) ->
-    gen_fsm:send_event(?REG_NAME, {load_game_state, FilePath}).
+    gen_statem:cast(?REG_NAME, {load_game_state, FilePath}).
 
 -spec save_game_state(file:filename()) -> ok.
 save_game_state(FilePath) ->
-    gen_fsm:send_event(?REG_NAME, {save_game_state, FilePath}).
+    gen_statem:cast(?REG_NAME, {save_game_state, FilePath}).
 
 -spec gui_wants_all_data() -> ok.
 gui_wants_all_data() ->
-    gen_fsm:send_all_state_event(?REG_NAME, gui_wants_all_data).
+    gen_statem:cast(?REG_NAME, gui_wants_all_data).
 
 %% @doc Change the problem state according to the last proposition of the indicated worker.
 %% This is used to play multiple rounds with a single problem spec.
 -spec apply_proposition(worker_id()) -> ok.
 apply_proposition(WorkerID) ->
-    gen_fsm:send_event(?REG_NAME, {apply_proposition, WorkerID}).
+    gen_statem:cast(?REG_NAME, {apply_proposition, WorkerID}).
 
 -spec block_worker(worker_id()) -> ok.
 block_worker(WorkerID) ->
-    gen_fsm:send_all_state_event(?REG_NAME, {block_worker, WorkerID}).
+    gen_statem:cast(?REG_NAME, {block_worker, WorkerID}).
 
 -spec unblock_worker(worker_id()) -> ok.
 unblock_worker(WorkerID) ->
-    gen_fsm:send_all_state_event(?REG_NAME, {unblock_worker, WorkerID}).
+    gen_statem:cast(?REG_NAME, {unblock_worker, WorkerID}).
 
 %% @doc Accumulate current scores per worker. Each worker has the score for his last
 %% proposition and a total accumulated score for the current problem.
 -spec add_scores() -> ok.
 add_scores() ->
-    gen_fsm:send_event(?REG_NAME, add_scores).
+    gen_statem:cast(?REG_NAME, add_scores).
 
 -spec quit_program() -> ok.
 quit_program() ->
-    gen_fsm:send_all_state_event(?REG_NAME, quit_program).
+    gen_statem:cast(?REG_NAME, quit_program).
 
 %% worker callbacks:
 
 -spec submit_proposition(worker_id(), string()) -> ok.
 submit_proposition(WorkerID, WorkerOutput) ->
-    gen_fsm:send_event(?REG_NAME, {submit_proposition, WorkerID, WorkerOutput}).
+    gen_statem:cast(?REG_NAME, {submit_proposition, WorkerID, WorkerOutput}).
 
 -spec worker_stopped(worker_id()) -> ok.
 worker_stopped(WorkerID) ->
-    gen_fsm:send_event(?REG_NAME, {worker_stopped, WorkerID}).
+    gen_statem:cast(?REG_NAME, {worker_stopped, WorkerID}).
 
 %% validator callback:
 
 -spec submit_validated_proposition(worker_id(), string(), string(), integer(), string()) -> ok.
 submit_validated_proposition(WorkerID, WorkerInput, WorkerOutput, Score, Caption) ->
-    gen_fsm:send_event(?REG_NAME, {submit_validated_proposition, WorkerID, WorkerInput, WorkerOutput, Score, Caption}).
+    gen_statem:cast(?REG_NAME, {submit_validated_proposition, WorkerID, WorkerInput, WorkerOutput, Score, Caption}).
 
 -spec validator_queue_empty() -> ok.
 validator_queue_empty() ->
-    gen_fsm:send_event(?REG_NAME, validator_queue_empty).
+    gen_statem:cast(?REG_NAME, validator_queue_empty).
+
 
 %% ===================================================================
-%% gen_fsm callbacks
+%% gen_statem callbacks
 %% ===================================================================
 
+callback_mode() ->
+    state_functions.
 
 init(_) ->
     {ok, Problems         } = application:get_env(problems),
@@ -206,7 +203,7 @@ init(_) ->
 %% -- state callbacks --
 
 
-ready({save_game_state, FilePath}, Data) ->
+ready(cast, {save_game_state, FilePath}, Data) ->
 
     case savegames:save_state(FilePath, Data) of
         ok ->
@@ -216,12 +213,12 @@ ready({save_game_state, FilePath}, Data) ->
             ok = lager:error("While saving game state: ~p", [Error]),
             gui:ack_save_game_state(Error)
     end,
-    {next_state, ready, Data};
+    keep_state_and_data;
 
 
-ready({load_game_state, FilePath}, Data=#state{config=#config{problems=Problems,
-                                                              score_mode=ScoreMode},
-                                               workers=WorkerDict}) ->
+ready(cast, {load_game_state, FilePath}, Data=#state{config=#config{problems=Problems,
+                                                                    score_mode=ScoreMode},
+                                                     workers=WorkerDict}) ->
 
     NewData =
         case file:consult(FilePath) of
@@ -248,20 +245,20 @@ ready({load_game_state, FilePath}, Data=#state{config=#config{problems=Problems,
                 gui:ack_load_game_state(Error),
                 Data
     end,
-    {next_state, ready, NewData};
+    {keep_state, NewData};
 
 
 %% Change the problem state according to the last proposition of the indicated worker
-ready({apply_proposition, WorkerID}, Data=#state{config=#config{problems=Problems},
-                                                 workers=WorkerDict,
-                                                 problem_state=OldProblemState,
-                                                 problem_idx=ProblemIdx}) ->
+ready(cast, {apply_proposition, WorkerID}, Data=#state{config=#config{problems=Problems},
+                                                       workers=WorkerDict,
+                                                       problem_state=OldProblemState,
+                                                       problem_idx=ProblemIdx}) ->
 
     #worker{last_proposition=LastProposition} = dict:fetch(WorkerID, WorkerDict),
     case LastProposition of
         none ->
             ok = lager:info("Refusing to apply proposition: Worker ~p has not submitted anything yet.", [WorkerID]),
-            {next_state, ready, Data};
+            keep_state_and_data;
         _ ->
             case changer:change_state(OldProblemState, LastProposition) of
                 {ok, NewProblemState} ->
@@ -275,22 +272,22 @@ ready({apply_proposition, WorkerID}, Data=#state{config=#config{problems=Problem
 
                             gui:problem_state_changed(NewProblemState),
                             gui:worker_input_changed(WorkerInput),
-                            {next_state, ready, Data#state{worker_input=WorkerInput,
+                            {keep_state, Data#state{worker_input=WorkerInput,
                                                            problem_state=NewProblemState}};
                         {error, Error} ->
                             ok = lager:error("DJ got error from barkeeper while applying proposition: ~p", [Error]),
                             %% do nothing, let user try again
-                            {next_state, ready, Data}
+                            keep_state_and_data
                     end;
                 Error ->
                     ok = lager:error("Error applying proposition: ~p. Worker ID: ~p, Error: ~p", [LastProposition, WorkerID, Error]),
                     %% do nothing, let user try again
-                    {next_state, ready, Data}
+                    keep_state_and_data
             end
     end;
 
 
-ready(add_scores, Data=#state{workers=WorkerDict}) ->
+ready(cast, add_scores, Data=#state{workers=WorkerDict}) ->
 
     NewWorkerDict = dict:map(
                       fun(WorkerID, W=#worker{last_prop_processed_score=ThisProcScore,
@@ -305,17 +302,17 @@ ready(add_scores, Data=#state{workers=WorkerDict}) ->
                               end
                       end,
                       WorkerDict),
-    {next_state, ready, Data#state{workers=NewWorkerDict}};
+    {keep_state, Data#state{workers=NewWorkerDict}};
 
 
-ready({worker_stopped, WorkerID}, Data) ->
+ready(cast, {worker_stopped, WorkerID}, _Data) ->
 
     ok = lager:debug("DJ received worker_stopped for worker ~p while in state ready", [WorkerID]),
     %% ignore this event
-    {next_state, ready, Data};
+    keep_state_and_data;
 
 
-ready({choose_problem, ProblemIdx}, Data=#state{config=#config{problems=Problems}, workers=WorkerDict}) ->
+ready(cast, {choose_problem, ProblemIdx}, Data=#state{config=#config{problems=Problems}, workers=WorkerDict}) ->
 
     try lists:nth(ProblemIdx+1, Problems) of
         {_Description, ProblemSpec, _AnswerTime, StartState} ->
@@ -328,33 +325,33 @@ ready({choose_problem, ProblemIdx}, Data=#state{config=#config{problems=Problems
                     gui:problem_state_changed(StartState),
                     gui:worker_input_changed(WorkerInput),
 
-                    {next_state, ready, Data#state{problem_idx=ProblemIdx,
-                                                   worker_input=WorkerInput,
-                                                   round=0,
-                                                   problem_state=StartState,
-                                                   workers=WorkerDict}};
+                    {keep_state, Data#state{problem_idx=ProblemIdx,
+                                            worker_input=WorkerInput,
+                                            round=0,
+                                            problem_state=StartState,
+                                            workers=WorkerDict}};
                 {error, Error} ->
                     ok = lager:error("DJ got error from barkeeper while choosing problem: ~p", [Error]),
                     %% do nothing, let user try again
-                    {next_state, ready, Data}
+                    keep_state_and_data
             end
     catch
         _ ->
             ok = lager:error("invalid request: choose_problem with index ~p", [ProblemIdx]),
-            {next_state, ready, Data}
+            keep_state_and_data
     end;
 
 
-ready(start_round, Data=#state{config=#config{problems=Problems, worker_call_timeout=WorkerCallTimeout},
-                               workers=WorkerDict,
-                               problem_idx=ProblemIdx,
-                               worker_input=WorkerInput,
-                               round=Round}) ->
+ready(cast, start_round, Data=#state{config=#config{problems=Problems, worker_call_timeout=WorkerCallTimeout},
+                                     workers=WorkerDict,
+                                     problem_idx=ProblemIdx,
+                                     worker_input=WorkerInput,
+                                     round=Round}) ->
 
     case dict:size(get_unblocked_workers(WorkerDict)) of
         0 ->
             ok = lager:info("DJ received start_round but no unblocked workers are registered"),
-            {next_state, ready, Data};
+            keep_state_and_data;
         _Some ->
             NewRound = Round+1,
             ok = lager:info("==> Starting problem ~p in round ~p with workers:~n    ~p",
@@ -377,29 +374,21 @@ ready(start_round, Data=#state{config=#config{problems=Problems, worker_call_tim
                     %% reset all workers, let user try starting a round again
                     kill_all_workers(ready, WorkerDict),
                     ok = lager:error("Not starting round because of error in giving out challenges"),
-                    {next_state, ready, Data}
+                    keep_state_and_data
             end
         end;
 
 
-ready(Event, Data) ->
+ready(Type, Event, Data) ->
 
-    unexpected(Event, ready),
-    {next_state, ready, Data}.
-
-
-
-ready(Event, _From, Data) ->
-
-    unexpected(Event, ready),
-    {reply, unexpected, ready, Data}.
+    handle_event(Type, Event, ready, Data).
 
 
 %% -----
 
 
 %% a worker submits a proposition
-running({submit_proposition, WorkerID, WorkerOutput}, Data=#state{workers=WorkerDict, worker_input=WorkerInput}) ->
+running(cast, {submit_proposition, WorkerID, WorkerOutput}, #state{workers=WorkerDict, worker_input=WorkerInput}) ->
 
     case dict:find(WorkerID, WorkerDict) of
         {ok, #worker{blocked=no}} ->
@@ -410,18 +399,18 @@ running({submit_proposition, WorkerID, WorkerOutput}, Data=#state{workers=Worker
         error ->
             ok = lager:error("received proposition from unknown worker ~p", [WorkerID])
     end,
-    {next_state, running, Data};
+    keep_state_and_data;
 
 
 %% the validator submits the result of validating a proposition
-running({submit_validated_proposition, WorkerID, WorkerInput, WorkerOutput, Score, Caption},
+running(cast, {submit_validated_proposition, WorkerID, WorkerInput, WorkerOutput, Score, Caption},
         Data=#state{worker_input=WorkerInput, workers=WorkerDict}) ->
 
     NewWorkerDict = process_validated_proposition(WorkerID, WorkerOutput, Score, Caption, WorkerDict),
-    {next_state, running, Data#state{workers=NewWorkerDict}};
+    {keep_state, Data#state{workers=NewWorkerDict}};
 
 
-running({worker_stopped, WorkerID}, Data=#state{workers=WorkerDict}) ->
+running(cast, {worker_stopped, WorkerID}, Data=#state{workers=WorkerDict}) ->
 
     NewWorkerDict = update_worker(WorkerID,
                                   fun(Worker) ->
@@ -447,17 +436,9 @@ running({worker_stopped, WorkerID}, Data=#state{workers=WorkerDict}) ->
     {next_state, NextState, NewData};
 
 
-running(Event, Data) ->
+running(Type, Event, Data) ->
 
-    unexpected(Event, running),
-    {next_state, running, Data}.
-
-
-
-running(Event, _From, Data) ->
-
-    unexpected(Event, running),
-    {reply, unexpected, running, Data}.
+    handle_event(Type, Event, running, Data).
 
 
 %% -----
@@ -465,13 +446,13 @@ running(Event, _From, Data) ->
 
 %% validator tells us he has finished processing propositions so we end
 %% the round
-waiting_for_validator(validator_queue_empty, Data=#state{round=Round,
-                                                         workers=WorkerDict,
-                                                         problem_idx=ProblemIdx,
-                                                         problem_state=ProblemState,
-                                                         config=#config{
-                                                                   problems=Problems,
-                                                                   score_mode=ScoreMode}}) ->
+waiting_for_validator(cast, validator_queue_empty, Data=#state{round=Round,
+                                                               workers=WorkerDict,
+                                                               problem_idx=ProblemIdx,
+                                                               problem_state=ProblemState,
+                                                               config=#config{
+                                                                         problems=Problems,
+                                                                         score_mode=ScoreMode}}) ->
 
     ok = lager:info("Validator queue empty. ending round ~p", [Round]),
     gui:round_ended(Round),
@@ -507,110 +488,23 @@ waiting_for_validator(validator_queue_empty, Data=#state{round=Round,
     end;
 
 
-waiting_for_validator({submit_validated_proposition, WorkerID, WorkerInput, WorkerOutput, Score, Caption},
+waiting_for_validator(cast, {submit_validated_proposition, WorkerID, WorkerInput, WorkerOutput, Score, Caption},
         Data=#state{worker_input=WorkerInput, workers=WorkerDict}) ->
 
     NewWorkerDict = process_validated_proposition(WorkerID, WorkerOutput, Score, Caption, WorkerDict),
-    {next_state, waiting_for_validator, Data#state{workers=NewWorkerDict}};
+    {keep_state, Data#state{workers=NewWorkerDict}};
 
 
-waiting_for_validator(Event, Data) ->
+waiting_for_validator(Type, Event, Data) ->
 
-    unexpected(Event, waiting_for_validator),
-    {next_state, waiting_for_validator, Data}.
-
-
-
-waiting_for_validator(Event, _From, Data) ->
-
-    unexpected(Event, waiting_for_validator),
-    {reply, unexpected, waiting_for_validator, Data}.
-
-
-%% -- stateless callbacks --
-
-
-handle_event(kill_all_workers, State, Data=#state{workers=WorkerDict}) ->
-
-    %% this generates worker_stopped messages from the workers
-    %% And thus ends the round indirectly.
-    kill_all_workers(State, WorkerDict),
-    %% do not change state
-    {next_state, State, Data};
-
-
-handle_event({block_worker, WorkerID}, State, Data=#state{workers=WorkerDict}) ->
-
-    ok = lager:debug("blocking worker ~p", [WorkerID]),
-    worker_app:kill_worker(WorkerID),
-    MaxBlockIdx = get_max_block_idx(WorkerDict),
-    NewWorkerDict = update_worker(WorkerID,
-                                  fun(W) ->
-                                          W#worker{blocked={idx, MaxBlockIdx+1}}
-                                  end,
-                                  WorkerDict),
-    {next_state, State, Data#state{workers=NewWorkerDict}};
-
-
-handle_event({unblock_worker, WorkerID}, State, Data=#state{workers=WorkerDict}) ->
-
-    ok = lager:debug("unblocking worker ~p", [WorkerID]),
-    NewWorkerDict = update_worker(WorkerID,
-                                  fun(W) ->
-                                          W#worker{blocked=no}
-                                  end,
-                                  WorkerDict),
-    {next_state, State, Data#state{workers=NewWorkerDict}};
-
-
-handle_event(gui_wants_all_data, State, Data) ->
-
-    send_all_data_to_gui(State, Data),
-    {next_state, State, Data};
-
-
-handle_event(quit_program, State, Data) ->
-
-    ok = lager:info("Quitting program"),
-
-    case init:get_argument(cover_enabled) of
-        {ok, [["true"]]} -> cover_utils:analyze();
-        _                -> ok
-    end,
-
-    init:stop(),
-    {next_state, State, Data};
-
-
-handle_event(Event, State, Data) ->
-
-    unexpected(Event, State),
-    {next_state, State, Data}.
-
-
-%% -----
-
-
-handle_sync_event(Event, _From, State, Data) ->
-
-    unexpected(Event, State),
-    {reply, unexpected, State, Data}.
-
-
-%% -----
-
-
-handle_info(Info, State, Data) ->
-
-    unexpected(Info, State),
-    {next_state, State, Data}.
+    handle_event(Type, Event, waiting_for_validator, Data).
 
 
 %% -----
 
 
 %% @doc Only really necessary for hot code loading, but has to be declared
-%% for the gen_fsm behavior.
+%% for the gen_statem behavior.
 %% We don't do hot code loading so this is just a dummy.
 code_change(_OldVsn, DataName, Data, _Extra) ->
 
@@ -625,9 +519,75 @@ terminate(_Msg, _StateName, _Data) ->
 
     ok.
 
+
 %% ===================================================================
 %% private functions
 %% ===================================================================
+
+%% -- stateless callbacks --
+
+
+handle_event(cast, kill_all_workers, State, Data=#state{workers=WorkerDict}) ->
+
+    %% this generates worker_stopped messages from the workers
+    %% And thus ends the round indirectly.
+    kill_all_workers(State, WorkerDict),
+    %% do not change state
+    {keep_state, Data};
+
+
+handle_event(cast, {block_worker, WorkerID}, _State, Data=#state{workers=WorkerDict}) ->
+
+    ok = lager:debug("blocking worker ~p", [WorkerID]),
+    worker_app:kill_worker(WorkerID),
+    MaxBlockIdx = get_max_block_idx(WorkerDict),
+    NewWorkerDict = update_worker(WorkerID,
+                                  fun(W) ->
+                                          W#worker{blocked={idx, MaxBlockIdx+1}}
+                                  end,
+                                  WorkerDict),
+    {keep_state, Data#state{workers=NewWorkerDict}};
+
+
+handle_event(cast, {unblock_worker, WorkerID}, _State, Data=#state{workers=WorkerDict}) ->
+
+    ok = lager:debug("unblocking worker ~p", [WorkerID]),
+    NewWorkerDict = update_worker(WorkerID,
+                                  fun(W) ->
+                                          W#worker{blocked=no}
+                                  end,
+                                  WorkerDict),
+    {keep_state, Data#state{workers=NewWorkerDict}};
+
+
+handle_event(cast, gui_wants_all_data, State, Data) ->
+
+    send_all_data_to_gui(State, Data),
+    {keep_state, Data};
+
+
+handle_event(cast, quit_program, _State, Data) ->
+
+    ok = lager:info("Quitting program"),
+
+    case init:get_argument(cover_enabled) of
+        {ok, [["true"]]} -> cover_utils:analyze();
+        _                -> ok
+    end,
+
+    init:stop(),
+    {keep_state, Data};
+
+
+handle_event(Type, Msg, State, Data) ->
+
+    ok = lager:error("Validator queue received unknown event ~p from ~p while in state ~p",
+                     [Msg, Type, State]),
+    {keep_state, Data}.
+
+
+%% -----
+
 
 %% @doc calculate normalized scores for the ending round and send
 %% corresponding updates to gui
@@ -687,14 +647,6 @@ calc_and_send_normalized_scores(ScoreMode, WorkerDict) ->
                              WorkerDict),
     _ = dict:map(fun send_worker_to_gui/2, NewWorkerDict),
     NewWorkerDict.
-
-
-%% @doc Unexpected allows to log unexpected messages
--spec unexpected(term(), atom()) -> any().
-unexpected(Msg, State) ->
-
-    ok = lager:error("~p received unknown event ~p while in state ~p",
-                [self(), Msg, State]).
 
 
 %% @doc Update a single worker in the worker dict.
