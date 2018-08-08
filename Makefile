@@ -29,13 +29,13 @@ LOG_LEVEL              = info
     NODE_NAME          = disco
 
     ## erlang bytecode location
-    BEAM_DIRS          = ebin/ apps/*/ebin/ deps/*/ebin/
+    BEAM_DIRS          = _build/default/lib/*/ebin/
 
     ## erlang 'magic cookie' for node authentication
     ERL_COOKIE         = disco_framework_erl_secret
 
 ## erlang build tool
-REBAR                  = ./rebar
+REBAR                  = ./rebar3
 
 ## code coverage, should only be enabled for integration test
 COVER_ENABLED          = false
@@ -52,16 +52,11 @@ endif
 
 PRINT_CAPTION          = @echo ""; echo "===== $@ ====="
 
-.PHONY: all get-deps update-deps compile distribute run doc clean clean_all
+.PHONY: all compile distribute run doc clean
 
 all: run
 
-get-deps:
-	$(PRINT_CAPTION)
-	$(REBAR) $@
-
-update-deps \
-compile: get-deps
+compile:
 	$(PRINT_CAPTION)
 	$(REBAR) $@
 
@@ -100,7 +95,6 @@ clean:
 
 clean_all: clean
 	$(PRINT_CAPTION)
-	rm -rf deps/
 	rm -rf log/
 	rm -rf autosaves/
 
@@ -145,31 +139,10 @@ integration_test:
 # dialyzer
 #
 
-PLT                 = plt
-PLT_LIBS            = $(wildcard deps/*/ebin)
-DIALYZER_APPS_PATHS = ebin $(wildcard apps/*/ebin)
-DIALYZER_WARN_OPTS  = -Werror_handling -Wunmatched_returns -Wrace_conditions
-DIALYZER_OPTS       = --no_native --fullpath --plt $(PLT) $(DIALYZER_APPS_PATHS) $(DIALYZER_WARN_OPTS)
 FILTER_WARNINGS     = fgrep -v -f ./dialyzer.ignore-warnings
 
-.PHONY: build_plt check_plt dialyze wunder-dialyze clean_plt
+.PHONY: dialyze
 
-build_plt: $(PLT)
-
-$(PLT):
-	dialyzer --build_plt --output_plt $(PLT) $(PLT_LIBS) --apps erts kernel stdlib
-
-check_plt: $(PLT)
-	dialyzer --check_plt --plt $(PLT) $(PLT_LIBS)
-
-dialyze: compile $(PLT)
+dialyze:
 	$(PRINT_CAPTION)
-	dialyzer $(DIALYZER_OPTS) | $(FILTER_WARNINGS)
-
-wunder-dialyze: compile $(PLT)
-	$(PRINT_CAPTION)
-	dialyzer $(DIALYZER_OPTS) -Wunderspecs | $(FILTER_WARNINGS)
-
-clean_all: clean_plt
-clean_plt:
-	rm -f $(PLT)
+	$(REBAR) dialyzer | $(FILTER_WARNINGS)
