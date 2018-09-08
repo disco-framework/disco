@@ -5,7 +5,7 @@
 
 init() ->
     cover:start(),
-    Results = cover:compile_beam_directory("ebin/"),
+    Results = cover:compile_beam_directory("_build/default/lib/disco/ebin/"),
     Failures = [ Msg || {error, Msg} <- Results],
     io:format("Cover compile failures: ~p~n", [Failures]).
 

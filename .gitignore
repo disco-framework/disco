@@ -1,13 +1,10 @@
 *~
-ebin/
-deps/
+_build/
 log/
 autosaves/
-plt
 .eunit/
 doc/edoc/
 apps/worker/doc/edoc/
 apps/worker/doc/edoc.css
 doc/users-guide/overview-eps-converted-to.pdf
 integration-coverage/
-.rebar
