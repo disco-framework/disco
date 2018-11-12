@@ -57,7 +57,10 @@ start(_StartType, _StartArgs) ->
             StartupResults =
                 case DoStartupTest of
                     true ->
-                        utils:pmap(fun(Prog) -> port_utils:try_open("", Prog, TestTimeout) end,
+                        utils:pmap(fun(Prog) ->
+                                       ok = lager:info("Testing ~s", [Prog]),
+                                       port_utils:try_open("", Prog, TestTimeout)
+                                   end,
                                    [BarkeeperProg, ValidatorProg, ChangerProg] ++ GuiProgList);
                     false ->
                         []
