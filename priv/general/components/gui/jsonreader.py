@@ -67,8 +67,8 @@ class JsonReader(QtCore.QThread):
 
          except ValueError as e:
             # catch ValueError to check for incomplete JSON
-            bufferLen = len(self.prevLines + currLine)-1
-            p = re.compile("Expecting object: line [0-9]* column [0-9]*.*(char " + str(bufferLen) + ")")
+            bufferLen = len(self.prevLines + currLine)
+            p = re.compile("Expecting .*: line [0-9]* column [0-9]*.*(char " + str(bufferLen-1) + "|" + str(bufferLen) + ")")
             if p.match(str(e)):
                # incomplete JSON received: JSON message contains new line
                self.prevLines += currLine
