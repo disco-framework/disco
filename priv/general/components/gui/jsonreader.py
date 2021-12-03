@@ -25,42 +25,40 @@ class JsonReader(QtCore.QThread):
       self.prevLines = ""
 
    def run(self):
+      def handle_worker_data():
+          d = msg['worker data']
+          self.worker_updated.emit(d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
+
+      def handle_all_data():
+          workerList = []
+          for w in msg['workers']:
+              workerList.append((w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8], w[9]))
+
+          problemList = []
+          for p in msg['problems']:
+              problemList.append((p[0], p[1], p[2], p[3]))
+          self.all_data.emit(msg['running'], workerList, problemList,
+              msg['problem idx'], msg['round'], msg['worker input'], msg['state'])
+
+      handlers = {
+         'worker updated'        : handle_worker_data,
+         'round started'         : (lambda: self.round_started.emit(msg['round number'])),
+         'round ended'           : (lambda: self.round_ended.emit(msg['round number'])),
+         'worker input changed'  : (lambda: self.worker_input_changed.emit(msg['worker input'])),
+         'problem chosen'        : (lambda: self.problem_chosen.emit(msg['problem idx'])),
+         'problem state changed' : (lambda: self.problem_state_changed.emit(msg['problem state'])),
+         'all data'              : handle_all_data,
+         'save game state'       : (lambda: self.save_game_state_reply.emit(msg['result'])),
+         'load game state'       : (lambda: self.load_game_state_reply.emit(msg['result']))
+      }
+
       while True:
          currLine = sys.stdin.readline()
          if not currLine:
             break
          try:
             msg = json.loads(self.prevLines + currLine)
-
             event = msg['event']
-
-            def handle_worker_data():
-                d = msg['worker data']
-                self.worker_updated.emit(d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
-
-            def handle_all_data():
-                workerList = []
-                for w in msg['workers']:
-                    workerList.append((w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8], w[9]))
-
-                problemList = []
-                for p in msg['problems']:
-                    problemList.append((p[0], p[1], p[2], p[3]))
-                self.all_data.emit(msg['running'], workerList, problemList,
-                    msg['problem idx'], msg['round'], msg['worker input'], msg['state'])
-
-            handlers = {
-               'worker updated'        : handle_worker_data,
-               'round started'         : (lambda: self.round_started.emit(msg['round number'])),
-               'round ended'           : (lambda: self.round_ended.emit(msg['round number'])),
-               'worker input changed'  : (lambda: self.worker_input_changed.emit(msg['worker input'])),
-               'problem chosen'        : (lambda: self.problem_chosen.emit(msg['problem idx'])),
-               'problem state changed' : (lambda: self.problem_state_changed.emit(msg['problem state'])),
-               'all data'              : handle_all_data,
-               'save game state'       : (lambda: self.save_game_state_reply.emit(msg['result'])),
-               'load game state'       : (lambda: self.load_game_state_reply.emit(msg['result']))
-            }
-
             handlers[event]()
 
          except KeyError as e:
