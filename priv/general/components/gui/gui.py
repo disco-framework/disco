@@ -2,7 +2,7 @@
 
 import sys
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from ui_mainview import Ui_MainWindow
 
 import json
@@ -12,18 +12,18 @@ from jsonreader import JsonReader
 ##################################################
 
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
 
    def __init__(self, parent=None):
-      QtGui.QMainWindow.__init__(self, parent)
+      QtWidgets.QMainWindow.__init__(self, parent)
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
 
       # status bar
-      self.labelProblemSpec  = QtGui.QLabel()
-      self.labelProblemTime  = QtGui.QLabel()
-      self.labelCurrentRound = QtGui.QLabel()
-      self.labelWorkerInput  = QtGui.QLabel()
+      self.labelProblemSpec  = QtWidgets.QLabel()
+      self.labelProblemTime  = QtWidgets.QLabel()
+      self.labelCurrentRound = QtWidgets.QLabel()
+      self.labelWorkerInput  = QtWidgets.QLabel()
       self.ui.statusbar.addWidget(self.labelProblemSpec,  1)
       self.ui.statusbar.addWidget(self.labelProblemTime,  1)
       self.ui.statusbar.addWidget(self.labelCurrentRound, 1)
@@ -38,40 +38,40 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.actionKillAllWorkers.setShortcut(QtGui.QKeySequence(self.tr("Ctrl+K")))
 
       self.DataCollector = JsonReader(self)
-      self.connect(self.DataCollector, QtCore.SIGNAL("received_data"), self.received)
-      self.connect(self.DataCollector, QtCore.SIGNAL("worker_updated"), self.update_worker)
-      self.connect(self.DataCollector, QtCore.SIGNAL("round_started"), self.start_round)
-      self.connect(self.DataCollector, QtCore.SIGNAL("round_ended"), self.end_round)
-      self.connect(self.DataCollector, QtCore.SIGNAL("worker_input_changed"), self.update_worker_input)
-      self.connect(self.DataCollector, QtCore.SIGNAL("problem_chosen"), self.choose_problem)
-      self.connect(self.DataCollector, QtCore.SIGNAL("all_data"), self.update_all)
-      self.connect(self.DataCollector, QtCore.SIGNAL("save_game_state_reply"), self.save_game_state_reply)
-      self.connect(self.DataCollector, QtCore.SIGNAL("load_game_state_reply"), self.load_game_state_reply)
+      self.DataCollector.data_received.connect(self.received)
+      self.DataCollector.worker_updated.connect(self.update_worker)
+      self.DataCollector.round_started.connect(self.start_round)
+      self.DataCollector.round_ended.connect(self.end_round)
+      self.DataCollector.worker_input_changed.connect(self.update_worker_input)
+      self.DataCollector.problem_chosen.connect(self.choose_problem)
+      self.DataCollector.all_data.connect(self.update_all)
+      self.DataCollector.save_game_state_reply.connect(self.save_game_state_reply)
+      self.DataCollector.load_game_state_reply.connect(self.load_game_state_reply)
       self.DataCollector.start()
 
       self.problemAnswerTime = 0
       self.roundTimerRemaining = 0
       self.roundTimer = QtCore.QTimer()
-      QtCore.QObject.connect(self.roundTimer, QtCore.SIGNAL("timeout()"), self.roundTimer_tick)
+      self.roundTimer.timeout.connect(self.roundTimer_tick)
 
       # file menu
-      QtCore.QObject.connect(self.ui.actionLoadGameState, QtCore.SIGNAL("triggered()"), self.btnLoadGameState_clicked)
-      QtCore.QObject.connect(self.ui.actionSaveGameState, QtCore.SIGNAL("triggered()"), self.btnSaveGameState_clicked)
-      QtCore.QObject.connect(self.ui.actionReloadAllData, QtCore.SIGNAL("triggered()"), self.btnReloadAllData_clicked)
-      QtCore.QObject.connect(self.ui.actionQuit, QtCore.SIGNAL("triggered()"), self.btnQuit_clicked)
+      self.ui.actionLoadGameState.triggered.connect(self.btnLoadGameState_clicked)
+      self.ui.actionSaveGameState.triggered.connect(self.btnSaveGameState_clicked)
+      self.ui.actionReloadAllData.triggered.connect(self.btnReloadAllData_clicked)
+      self.ui.actionQuit.triggered.connect(self.btnQuit_clicked)
 
       # round menu
-      QtCore.QObject.connect(self.ui.actionStartRound, QtCore.SIGNAL("triggered()"), self.btnStartRound_clicked)
-      QtCore.QObject.connect(self.ui.actionAddScores, QtCore.SIGNAL("triggered()"), self.btnAddScores_clicked)
-      QtCore.QObject.connect(self.ui.actionKillAllWorkers, QtCore.SIGNAL("triggered()"), self.btnKillAllWorkers_clicked)
+      self.ui.actionStartRound.triggered.connect(self.btnStartRound_clicked)
+      self.ui.actionAddScores.triggered.connect(self.btnAddScores_clicked)
+      self.ui.actionKillAllWorkers.triggered.connect(self.btnKillAllWorkers_clicked)
 
       # worker tab
       self.ui.tableWorker.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
       self.ui.tableWorker.customContextMenuRequested.connect(self.tableWorker_requestContextMenu)
 
       # io tab
-      QtCore.QObject.connect(self.ui.btnSend, QtCore.SIGNAL("clicked()"), self.btnSend_clicked)
-      QtCore.QObject.connect(self.ui.edtSend, QtCore.SIGNAL("returnPressed()"), self.btnSend_clicked)
+      self.ui.btnSend.clicked.connect(self.btnSend_clicked)
+      self.ui.edtSend.returnPressed.connect(self.btnSend_clicked)
 
       # worker table header
       thh = self.ui.tableWorker.horizontalHeader()
@@ -87,7 +87,7 @@ class MainWindow(QtGui.QMainWindow):
 
       tvh = self.ui.tableWorker.verticalHeader()
       tvh.setVisible(True)
-      tvh.setResizeMode(QtGui.QHeaderView.Fixed)
+      tvh.setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
       self.reset_problem_list([])
       self.worker_blocked = {}
@@ -140,9 +140,11 @@ class MainWindow(QtGui.QMainWindow):
 
    ## worker tab
    def tableWorker_requestContextMenu(self, position):
+      if self.ui.tableWorker.currentRow() < 0:
+         return
       workerId = str(self.ui.tableWorker.item(self.ui.tableWorker.currentRow(), 1).text())
       # create menu
-      menu = QtGui.QMenu()
+      menu = QtWidgets.QMenu()
       actApply = menu.addAction("&Apply proposition")
       actBlock = None
       actUnblock = None
@@ -154,9 +156,9 @@ class MainWindow(QtGui.QMainWindow):
       action = menu.exec_(self.ui.tableWorker.viewport().mapToGlobal(position))
       if action != None:
          if action == actApply:
-            if QtGui.QMessageBox.information(self, "Apply proposition", "Really apply proposition from " + workerId + "?",
-                                             QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
-                                             QtGui.QMessageBox.No) == QtGui.QMessageBox.Yes:
+            if QtWidgets.QMessageBox.information(self, "Apply proposition", "Really apply proposition from " + workerId + "?",
+                                                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                 QtWidgets.QMessageBox.No) == QtWidgets.QMessageBox.Yes:
                self.send(json.dumps({'action': 'apply proposition', 'worker id': workerId}))
          elif action == actBlock:
             self.send(json.dumps({'action': 'block worker', 'worker id': workerId}))
@@ -299,19 +301,19 @@ class MainWindow(QtGui.QMainWindow):
 
       self.ui.tableWorker.setSortingEnabled(False)
 
-      item = QtGui.QTableWidgetItem()
+      item = QtWidgets.QTableWidgetItem()
       item.setText(group)
       self.ui.tableWorker.setItem(row, 0, item)
 
-      item = QtGui.QTableWidgetItem()
+      item = QtWidgets.QTableWidgetItem()
       item.setText(id)
       self.ui.tableWorker.setItem(row, 1, item)
 
-      item = QtGui.QTableWidgetItem()
+      item = QtWidgets.QTableWidgetItem()
       item.setText(name)
       self.ui.tableWorker.setItem(row, 2, item)
 
-      item = QtGui.QTableWidgetItem()
+      item = QtWidgets.QTableWidgetItem()
       self.ui.tableWorker.setItem(row, 3, item)
 
       item = CustomTableWidgetItem()
@@ -382,27 +384,26 @@ class MainWindow(QtGui.QMainWindow):
       self.problemList = lst
       self.ui.menuProblems.clear()
       if lst == []:
-         action = QtGui.QAction(self)
+         action = QtWidgets.QAction(self)
          action.setText("--- no problems ---")
          action.setEnabled(False)
          self.ui.menuProblems.addAction(action)
       else:
          for idx, (description, spec, answerTime, state) in enumerate(lst):
-            action = QtGui.QAction(self)
+            action = QtWidgets.QAction(self)
             action.setText(description + "\t" + str(answerTime/1000.0) + "s")
             action.setCheckable(True)
             if checkedIdx == idx:
                action.setChecked(True)
-            QtCore.QObject.connect(action, QtCore.SIGNAL("triggered()"),
-                                   lambda i=idx, a=action, chk=(checkedIdx==idx):
-                                      self.btnChooseProblem_clicked(i, a, chk))
+            action.triggered.connect(lambda i=idx, a=action, chk=(checkedIdx==idx):
+                                     self.btnChooseProblem_clicked(i, a, chk))
             self.ui.menuProblems.addAction(action)
 
 
 ##################################################
 
 
-class WorkingWidget(QtGui.QLabel):
+class WorkingWidget(QtWidgets.QLabel):
 
     def __init__(self, parent=None):
         super(WorkingWidget, self).__init__(parent)
@@ -415,11 +416,11 @@ class WorkingWidget(QtGui.QLabel):
 ##################################################
 
 
-class CustomTableWidgetItem(QtGui.QTableWidgetItem):
+class CustomTableWidgetItem(QtWidgets.QTableWidgetItem):
 
    def __init__(self):
       # call custom constructor with item type 'UserType'
-      QtGui.QTableWidgetItem.__init__(self, QtGui.QTableWidgetItem.UserType)
+      QtWidgets.QTableWidgetItem.__init__(self, QtWidgets.QTableWidgetItem.UserType)
       self.blocked = False
       self.sortKey = 0
 
@@ -449,7 +450,7 @@ def escape_html(str):
 
 
 if __name__ == "__main__":
-   app = QtGui.QApplication(sys.argv)
+   app = QtWidgets.QApplication(sys.argv)
    win = MainWindow()
    win.show()
    sys.exit(app.exec_())

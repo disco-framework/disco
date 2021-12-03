@@ -4,10 +4,21 @@ import sys
 import json
 import re
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 
 class JsonReader(QtCore.QThread):
+
+   data_received         = QtCore.pyqtSignal(str)
+   worker_updated        = QtCore.pyqtSignal(str, str, str, int, int, int, object, bool)
+   round_started         = QtCore.pyqtSignal(int)
+   round_ended           = QtCore.pyqtSignal(int)
+   worker_input_changed  = QtCore.pyqtSignal(list)
+   problem_chosen        = QtCore.pyqtSignal(int)
+   problem_state_changed = QtCore.pyqtSignal(str)
+   all_data              = QtCore.pyqtSignal(bool, list, list, int, int, list, str)
+   save_game_state_reply = QtCore.pyqtSignal(str)
+   load_game_state_reply = QtCore.pyqtSignal(str)
 
    def __init__(self, parent=None):
       QtCore.QThread.__init__(self, parent)
@@ -25,7 +36,7 @@ class JsonReader(QtCore.QThread):
 
             def handle_worker_data():
                 d = msg['worker data']
-                self.emit(QtCore.SIGNAL("worker_updated"), d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
+                self.worker_updated.emit(d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
 
             def handle_all_data():
                 workerList = []
@@ -35,19 +46,19 @@ class JsonReader(QtCore.QThread):
                 problemList = []
                 for p in msg['problems']:
                     problemList.append((p[0], p[1], p[2], p[3]))
-                self.emit(QtCore.SIGNAL("all_data"), msg['running'], workerList, problemList,
+                self.all_data.emit(msg['running'], workerList, problemList,
                     msg['problem idx'], msg['round'], msg['worker input'], msg['state'])
 
             handlers = {
                'worker updated'        : handle_worker_data,
-               'round started'         : (lambda: self.emit(QtCore.SIGNAL("round_started"),         msg['round number'])),
-               'round ended'           : (lambda: self.emit(QtCore.SIGNAL("round_ended"),           msg['round number'])),
-               'worker input changed'  : (lambda: self.emit(QtCore.SIGNAL("worker_input_changed"),  msg['worker input'])),
-               'problem chosen'        : (lambda: self.emit(QtCore.SIGNAL("problem_chosen"),        msg['problem idx'])),
-               'problem state changed' : (lambda: self.emit(QtCore.SIGNAL("problem_state_changed"), msg['problem state'])),
+               'round started'         : (lambda: self.round_started.emit(msg['round number'])),
+               'round ended'           : (lambda: self.round_ended.emit(msg['round number'])),
+               'worker input changed'  : (lambda: self.worker_input_changed.emit(msg['worker input'])),
+               'problem chosen'        : (lambda: self.problem_chosen.emit(msg['problem idx'])),
+               'problem state changed' : (lambda: self.problem_state_changed.emit(msg['problem state'])),
                'all data'              : handle_all_data,
-               'save game state'       : (lambda: self.emit(QtCore.SIGNAL("save_game_state_reply"), msg['result'])),
-               'load game state'       : (lambda: self.emit(QtCore.SIGNAL("load_game_state_reply"), msg['result']))
+               'save game state'       : (lambda: self.save_game_state_reply.emit(msg['result'])),
+               'load game state'       : (lambda: self.load_game_state_reply.emit(msg['result']))
             }
 
             handlers[event]()
@@ -71,6 +82,6 @@ class JsonReader(QtCore.QThread):
                raise e
 
          else:
-            self.emit(QtCore.SIGNAL("received_data"), self.prevLines + currLine)
+            self.data_received.emit(self.prevLines + currLine)
             # reset line buffer if successfully parsed
             self.prevLines = ""
