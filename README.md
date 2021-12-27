@@ -29,13 +29,13 @@ To use the DisCo framework for your own contest, you should provide at least you
  - ssh client (e.g. `openssh`)
  - `ip` (to find out local ip address on the server)
  - `rsync`
- - `python`, `pyqt5-dev-tools`/`PyQt5-devel` (for general gui component)
+ - `python`, `pyqt5-dev-tools`/`python3-PyQt5-devel` (for general gui component)
  - `python3` (only for the integration tests)
 
 #### For the 'countdown2' example contest
 - Install `haskell-platform`
 - For the validator component
-  - Json package: `cabal update && cabal install json`
+  - Json package: `cabal update && cabal install --lib json`
 - build components and workers: `make -sC priv/countdown2`
 - `make run`
 
