@@ -15,7 +15,7 @@ from jsonreader import JsonReader
 class MainWindow(QtWidgets.QMainWindow):
 
    def __init__(self, parent=None):
-      QtWidgets.QMainWindow.__init__(self, parent)
+      super(MainWindow, self).__init__(parent)
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
 
@@ -420,7 +420,7 @@ class CustomTableWidgetItem(QtWidgets.QTableWidgetItem):
 
    def __init__(self):
       # call custom constructor with item type 'UserType'
-      QtWidgets.QTableWidgetItem.__init__(self, QtWidgets.QTableWidgetItem.UserType)
+      super(CustomTableWidgetItem, self).__init__(QtWidgets.QTableWidgetItem.UserType)
       self.blocked = False
       self.sortKey = 0
 

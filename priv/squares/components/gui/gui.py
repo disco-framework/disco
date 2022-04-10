@@ -18,7 +18,7 @@ import random
 class MainWindow(QtWidgets.QMainWindow):
 
    def __init__(self, parent=None):
-      QtWidgets.QMainWindow.__init__(self, parent)
+      super(MainWindow, self).__init__(parent)
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
 
@@ -212,7 +212,7 @@ class PaintBox(QtWidgets.QWidget):
    BG_COLOR = QtGui.qRgb(242, 242, 242)
 
    def __init__(self, parent=None):
-      QtWidgets.QWidget.__init__(self, parent)
+      super(PaintBox, self).__init__(parent)
       ## Set StaticContents to enable minimal repaints on resizes.
       self.setAttribute(QtCore.Qt.WA_StaticContents)
       self.squareSize = None
