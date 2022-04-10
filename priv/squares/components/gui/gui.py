@@ -253,9 +253,9 @@ class PaintBox(QtWidgets.QWidget):
       if self.squareSize < 400:
          self.squareScale = int(self.squareScale)
       squareLen = self.squareSize * self.squareScale
-      self.squareOffset = QtCore.QPoint((widgetSize.width()  - squareLen) / 2,
-                                        (widgetSize.height() - squareLen) / 2)
-      
+      self.squareOffset = QtCore.QPoint((widgetSize.width()  - squareLen) // 2,
+                                        (widgetSize.height() - squareLen) // 2)
+
    def drawProposition(self, proposition):
       ## DEBUG
       #print(">>   drawProposition", proposition)
@@ -279,13 +279,13 @@ class PaintBox(QtWidgets.QWidget):
       painter.setFont(font)
       text = "size: " + str(self.squareSize)
       rect = metrics.boundingRect(text)
-      painter.drawText(self.image.width() - rect.width(), self.image.height(), text)
+      painter.drawText(self.image.width() - int(rect.width()), self.image.height(), text)
 
       ## draw proposition squares
       if proposition != None:
          color = QtGui.QColor()
          random.seed(4)
-         for x,y,a in re.findall('\( *(\d+) *, *(\d+) *, *(\d+) *\)', proposition):
+         for x, y, a in re.findall('\( *(\d+) *, *(\d+) *, *(\d+) *\)', proposition):
             text = str(a)
             x = int(x) * self.squareScale + self.squareOffset.x()
             y = int(y) * self.squareScale + self.squareOffset.y()
@@ -299,8 +299,8 @@ class PaintBox(QtWidgets.QWidget):
             painter.drawRect(x, y, a, a)
             fontRect = metrics.boundingRect(text)
             painter.setPen(QtGui.QPen(QtCore.Qt.white))
-            painter.drawText(x - (fontRect.width()  - a) / 2 - 1,
-                             y + (fontRect.height() + a) / 2 - 3,
+            painter.drawText(int(x - (fontRect.width()  - a) / 2 - 1),
+                             int(y + (fontRect.height() + a) / 2 - 3),
                              text)
 
       self.update()

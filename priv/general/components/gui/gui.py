@@ -317,15 +317,15 @@ class MainWindow(QtWidgets.QMainWindow):
       self.ui.tableWorker.setItem(row, 3, item)
 
       item = CustomTableWidgetItem()
-      item.setTextAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
+      item.setTextAlignment(int(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter))
       self.ui.tableWorker.setItem(row, 4, item)
 
       item = CustomTableWidgetItem()
-      item.setTextAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
+      item.setTextAlignment(int(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter))
       self.ui.tableWorker.setItem(row, 5, item)
 
       item = CustomTableWidgetItem()
-      item.setTextAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
+      item.setTextAlignment(int(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter))
       self.ui.tableWorker.setItem(row, 6, item)
 
       self.update_worker_by_row(row, id, proposition, propCaption, score, processedScore, problemScore, blocked, working)
