@@ -1,16 +1,14 @@
-[{<<"jsx">>,
-  {git,"git://github.com/talentdeficit/jsx",
-       {ref,"352d6b21cbec4fe1b66bc7ce3ded67a3b32add2c"}},
-  0},
+{"1.1.0",
+[{<<"jsx">>,{pkg,<<"jsx">>,<<"1.4.5">>},0},
  {<<"lager">>,
-  {git,"git://github.com/basho/lager",
+  {git,"https://github.com/erlang-lager/lager.git",
        {ref,"4fcb8fd40f6ab7a3fa30f4d5b559a10788ac7886"}},
   0},
- {<<"meck">>,
-  {git,"git://github.com/eproxus/meck.git",
-       {ref,"70cfe7c67170af9d8f443c590904e11e807b7dee"}},
-  0},
- {<<"proper">>,
-  {git,"git://github.com/manopapad/proper",
-       {ref,"f2b7b81666b21707244a40857cf50f4362b6e3c2"}},
-  0}].
+ {<<"meck">>,{pkg,<<"meck">>,<<"0.8.13">>},0},
+ {<<"proper">>,{pkg,<<"proper">>,<<"1.3.0">>},0}]}.
+[
+{pkg_hash,[
+ {<<"jsx">>, <<"4FADDBE604AC330256D99936973E0C828DBBA1D7F27EA246C71879E447051F10">>},
+ {<<"meck">>, <<"FFEDB39F99B0B99703B8601C6F17C7F76313EE12DE6B646E671E3188401F7866">>},
+ {<<"proper">>, <<"C1ACD51C51DA17A2FE91D7A6FC6A0C25A6A9849D8DC77093533109D1218D8457">>}]}
+].
