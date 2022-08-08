@@ -130,7 +130,7 @@ eunit_test_%: compile ./src/test/%_tests.erl
 .PHONY: integration_test
 
 integration_test:
-	$(MAKE) -s CONFIG_FILE=integration-test.config COVER_ENABLED=true run
+	$(MAKE) -s ERL_ZFLAGS="-noshell" CONFIG_FILE=integration-test.config COVER_ENABLED=true run
 	@echo "-- INTEGRATION TEST RESULTS --"
 	@cat log/integration-test.log
 	@tail -n1 log/integration-test.log | grep OK
