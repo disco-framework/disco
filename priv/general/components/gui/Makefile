@@ -9,7 +9,7 @@ all: compile
 compile: $(FORM)
 
 ui_%.py: %.ui
-	pyuic4 $< -o $@
+	pyuic5 $< -o $@
 
 run: compile
 	@DISPLAY=:0 ./$(MAIN) 2>/dev/null

@@ -2,7 +2,7 @@
 
 import sys
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from ui_squaresview import Ui_MainWindow
 
 import json
@@ -15,10 +15,10 @@ import random
 ##################################################
 
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
 
    def __init__(self, parent=None):
-      QtGui.QMainWindow.__init__(self, parent)
+      super(MainWindow, self).__init__(parent)
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
 
@@ -27,19 +27,19 @@ class MainWindow(QtGui.QMainWindow):
       self.clear_worker_table()
 
       self.DataCollector = JsonReader(self)
-      self.connect(self.DataCollector, QtCore.SIGNAL("received_data"), self.received)
-      self.connect(self.DataCollector, QtCore.SIGNAL("worker_updated"), self.update_worker)
-      self.connect(self.DataCollector, QtCore.SIGNAL("round_started"), self.start_round)
-      self.connect(self.DataCollector, QtCore.SIGNAL("worker_input_changed"), self.update_worker_input)
-      self.connect(self.DataCollector, QtCore.SIGNAL("problem_state_changed"), self.update_problem_state)
-      self.connect(self.DataCollector, QtCore.SIGNAL("all_data"), self.update_all)
+      self.DataCollector.data_received.connect(self.received)
+      self.DataCollector.worker_updated.connect(self.update_worker)
+      self.DataCollector.round_started.connect(self.start_round)
+      self.DataCollector.worker_input_changed.connect(self.update_worker_input)
+      self.DataCollector.problem_state_changed.connect(self.update_problem_state)
+      self.DataCollector.all_data.connect(self.update_all)
       self.DataCollector.start()
 
       # proposition tab
-      QtCore.QObject.connect(self.ui.cbxId, QtCore.SIGNAL("currentIndexChanged(int)"), self.cbxId_indexChanged)
+      self.ui.cbxId.currentIndexChanged.connect(self.cbxId_indexChanged)
 
       self.paintBox = PaintBox(self.ui.tabProposition)
-      sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+      sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
       sizePolicy.setHorizontalStretch(0)
       sizePolicy.setVerticalStretch(0)
       sizePolicy.setHeightForWidth(self.paintBox.sizePolicy().hasHeightForWidth())
@@ -47,8 +47,8 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.gridLayout_4.addWidget(self.paintBox, 1, 0, 1, 1)
 
       # io tab
-      QtCore.QObject.connect(self.ui.btnSend, QtCore.SIGNAL("clicked()"), self.btnSend_clicked)
-      QtCore.QObject.connect(self.ui.edtSend, QtCore.SIGNAL("returnPressed()"), self.btnSend_clicked)
+      self.ui.btnSend.clicked.connect(self.btnSend_clicked)
+      self.ui.edtSend.returnPressed.connect(self.btnSend_clicked)
 
    def closeEvent(self, e):
       self.send(json.dumps({'action': 'quit program'}))
@@ -206,13 +206,13 @@ class MainWindow(QtGui.QMainWindow):
 ##################################################
 
 
-class PaintBox(QtGui.QWidget):
+class PaintBox(QtWidgets.QWidget):
 
    MARGIN = 5
    BG_COLOR = QtGui.qRgb(242, 242, 242)
 
    def __init__(self, parent=None):
-      QtGui.QWidget.__init__(self, parent)
+      super(PaintBox, self).__init__(parent)
       ## Set StaticContents to enable minimal repaints on resizes.
       self.setAttribute(QtCore.Qt.WA_StaticContents)
       self.squareSize = None
@@ -253,9 +253,9 @@ class PaintBox(QtGui.QWidget):
       if self.squareSize < 400:
          self.squareScale = int(self.squareScale)
       squareLen = self.squareSize * self.squareScale
-      self.squareOffset = QtCore.QPoint((widgetSize.width()  - squareLen) / 2,
-                                        (widgetSize.height() - squareLen) / 2)
-      
+      self.squareOffset = QtCore.QPoint((widgetSize.width()  - squareLen) // 2,
+                                        (widgetSize.height() - squareLen) // 2)
+
    def drawProposition(self, proposition):
       ## DEBUG
       #print(">>   drawProposition", proposition)
@@ -279,13 +279,13 @@ class PaintBox(QtGui.QWidget):
       painter.setFont(font)
       text = "size: " + str(self.squareSize)
       rect = metrics.boundingRect(text)
-      painter.drawText(self.image.width() - rect.width(), self.image.height(), text)
+      painter.drawText(self.image.width() - int(rect.width()), self.image.height(), text)
 
       ## draw proposition squares
       if proposition != None:
          color = QtGui.QColor()
          random.seed(4)
-         for x,y,a in re.findall('\( *(\d+) *, *(\d+) *, *(\d+) *\)', proposition):
+         for x, y, a in re.findall('\( *(\d+) *, *(\d+) *, *(\d+) *\)', proposition):
             text = str(a)
             x = int(x) * self.squareScale + self.squareOffset.x()
             y = int(y) * self.squareScale + self.squareOffset.y()
@@ -299,8 +299,8 @@ class PaintBox(QtGui.QWidget):
             painter.drawRect(x, y, a, a)
             fontRect = metrics.boundingRect(text)
             painter.setPen(QtGui.QPen(QtCore.Qt.white))
-            painter.drawText(x - (fontRect.width()  - a) / 2 - 1,
-                             y + (fontRect.height() + a) / 2 - 3,
+            painter.drawText(int(x - (fontRect.width()  - a) / 2 - 1),
+                             int(y + (fontRect.height() + a) / 2 - 3),
                              text)
 
       self.update()
@@ -311,7 +311,7 @@ class PaintBox(QtGui.QWidget):
 
    def resizeEvent(self, event):
       self.resizeImage(event.size())
-      QtGui.QWidget.resizeEvent(self, event)
+      QtWidgets.QWidget.resizeEvent(self, event)
 
 
 ##################################################
@@ -325,7 +325,7 @@ def escape_html(str):
 
 
 if __name__ == "__main__":
-   app = QtGui.QApplication(sys.argv)
+   app = QtWidgets.QApplication(sys.argv)
    win = MainWindow()
    win.show()
    sys.exit(app.exec_())
