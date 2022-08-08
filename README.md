@@ -1,5 +1,4 @@
 # The DisCo Framework
-[![Build Status](https://travis-ci.org/disco-framework/disco.svg?branch=master)](https://travis-ci.org/disco-framework/disco)
 
 A framework for hosting language-agnostic programming contests with distributed live shootouts (**Dis** tributed **Co** ntest shootout framework).
 
