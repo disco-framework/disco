@@ -5,17 +5,15 @@ on: push
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Erlang/OTP ${{matrix.otp}} / rebar3 ${{matrix.rebar3}}
+    name: Erlang/OTP ${{matrix.otp}}
     strategy:
       matrix:
         otp: ['20.3', '21.3', '23.3.4.16']
-        rebar3: ['3.14.3']
     steps:
       - uses: actions/checkout@v3
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
-          rebar3-version: ${{matrix.rebar3}}
       - name: Compile
         run: make compile
       - name: Typecheck
