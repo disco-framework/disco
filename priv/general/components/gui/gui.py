@@ -395,7 +395,7 @@ class MainWindow(QtWidgets.QMainWindow):
             action.setCheckable(True)
             if checkedIdx == idx:
                action.setChecked(True)
-            action.triggered.connect(lambda i=idx, a=action, chk=(checkedIdx==idx):
+            action.triggered.connect(lambda state, i=idx, a=action, chk=(checkedIdx==idx):
                                      self.btnChooseProblem_clicked(i, a, chk))
             self.ui.menuProblems.addAction(action)
 
