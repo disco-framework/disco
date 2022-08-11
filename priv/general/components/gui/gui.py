@@ -107,12 +107,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
    ## file menu
    def btnLoadGameState_clicked(self):
-      fileName = str(QtGui.QFileDialog.getOpenFileName())
+      fileName = str(QtWidgets.QFileDialog.getOpenFileName())
       if fileName != "":
          self.send(json.dumps({'action': 'load game state', 'file path': fileName}))
 
    def btnSaveGameState_clicked(self):
-      fileName = str(QtGui.QFileDialog.getSaveFileName())
+      fileName = str(QtWidgets.QFileDialog.getSaveFileName())
       if fileName != "":
          self.send(json.dumps({'action': 'save game state', 'file path': fileName}))
 
